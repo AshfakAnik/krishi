@@ -1,0 +1,137 @@
+@if (cycle(); as row) {
+  <ui-page-header
+    eyebrow="Cultivation Cycle"
+    [title]="row.reference"
+    [subtitle]="cropName(row.cropId) + ' · ' + varietyName(row.varietyId)"
+    backLink="/cycles"
+    backLabel="All cycles"
+  >
+    <ui-status-badge [label]="statusLabel()" [tone]="statusTone()" />
+  </ui-page-header>
+
+  @if (error(); as message) {
+    <ui-alert tone="bad" [message]="message" (dismissed)="clearError()" />
+  }
+
+  @if (released()) {
+    <ui-alert
+      tone="neutral"
+      message="This cycle has finished, so it no longer holds its plot — the plot is free for the next season."
+      [dismissible]="false"
+    />
+  }
+
+  <div class="grid gap-4 lg:grid-cols-3">
+    <div class="space-y-4 lg:col-span-2">
+      <ui-section-card heading="Cycle">
+        <ui-field-list [fields]="summary()" />
+      </ui-section-card>
+
+      <ui-section-card heading="Lifecycle">
+        <ol class="space-y-3">
+          @for (step of progression; track step) {
+            <li class="flex items-start gap-3">
+              <span
+                class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-medium"
+                [class.bg-brand-600]="stepState(step) === 'current'"
+                [class.text-white]="stepState(step) === 'current'"
+                [class.bg-ok-100]="stepState(step) === 'done'"
+                [class.text-ok-700]="stepState(step) === 'done'"
+                [class.bg-ink-100]="stepState(step) === 'todo'"
+                [class.text-ink-500]="stepState(step) === 'todo'"
+              >
+                @if (stepState(step) === 'done') {
+                  <ui-icon name="check-shield" [size]="12" />
+                } @else {
+                  {{ $index + 1 }}
+                }
+              </span>
+              <span
+                class="text-sm"
+                [class.font-medium]="stepState(step) === 'current'"
+                [class.text-ink-900]="stepState(step) !== 'todo'"
+                [class.text-ink-500]="stepState(step) === 'todo'"
+              >
+                {{ statusLabels[step] }}
+              </span>
+            </li>
+          }
+        </ol>
+
+        @if (row.status === 'aborted') {
+          <p class="mt-4 rounded-md bg-bad-100 px-3 py-2 text-xs text-bad-700">
+            This cycle was aborted and cannot resume. Its plot was released.
+          </p>
+        }
+      </ui-section-card>
+    </div>
+
+    <div class="space-y-4">
+      <ui-section-card heading="Expected harvest" note="Preview">
+        <dl class="space-y-3 text-sm">
+          <div class="flex items-baseline justify-between gap-3">
+            <dt class="text-ink-500">Expected</dt>
+            <dd class="tnum font-medium text-ink-900">{{ maund(row.expectedYield) }}</dd>
+          </div>
+        </dl>
+        <p class="mt-4 text-xs text-ink-600">
+          From plot area and the variety's yield. Crop Monitoring adjusts it down when damage is
+          recorded.
+        </p>
+      </ui-section-card>
+
+      @if (advanceable() || abortable()) {
+        <ui-section-card heading="Move this cycle along">
+          <p class="mb-3 text-sm text-ink-600">
+            @if (advanceable()) {
+              The next step is <span class="font-medium">{{ nextLabel() }}</span
+              >. Settling releases the plot for the next season.
+            } @else {
+              This cycle is at the end of its progression.
+            }
+          </p>
+
+          @if (abortable()) {
+            <label for="abort-note" class="block text-sm font-medium text-ink-700">
+              Reason <span class="text-ink-500">(recorded if aborting)</span>
+            </label>
+            <textarea
+              id="abort-note"
+              rows="2"
+              [value]="note()"
+              (input)="onNote($event)"
+              class="mt-1 mb-3 w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+              placeholder="Flood, pest, or the agreement was revoked."
+            ></textarea>
+          }
+
+          <div class="flex flex-col gap-2 sm:flex-row">
+            @if (advanceable()) {
+              <button
+                type="button"
+                (click)="advanceCycle()"
+                [disabled]="saving()"
+                class="inline-flex flex-1 items-center justify-center gap-1.5 rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+              >
+                <ui-icon name="check-shield" [size]="15" />
+                Move to {{ nextLabel() }}
+              </button>
+            }
+            @if (abortable()) {
+              <button
+                type="button"
+                (click)="abortCycle()"
+                [disabled]="saving()"
+                class="inline-flex flex-1 items-center justify-center gap-1.5 rounded-md border border-bad-600 px-3 py-2 text-sm font-medium text-bad-700 hover:bg-bad-100 disabled:opacity-60"
+              >
+                Abort cycle
+              </button>
+            }
+          </div>
+        </ui-section-card>
+      }
+    </div>
+  </div>
+} @else {
+  <p class="py-16 text-center text-sm text-ink-500">Loading cycle…</p>
+}

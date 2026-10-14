@@ -1,0 +1,12 @@
+<dl class="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2 lg:grid-cols-3">
+  @for (field of fields(); track field.label) {
+    <div class="min-w-0">
+      <dt class="text-xs font-medium tracking-wide text-ink-500 uppercase">
+        {{ field.label }}
+      </dt>
+      <dd class="mt-0.5 text-sm text-ink-900" [class.tnum]="field.mono === true">
+        {{ field.value }}
+      </dd>
+    </div>
+  }
+</dl>

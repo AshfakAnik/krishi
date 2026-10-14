@@ -1,0 +1,33 @@
+@if (entry(); as module) {
+  <ui-page-header
+    [eyebrow]="module.group"
+    [title]="module.label"
+    subtitle="Planned — not built yet."
+  />
+
+  <div class="grid gap-4 lg:grid-cols-2">
+    <ui-section-card heading="What this module will do">
+      <p class="text-sm text-ink-700">{{ module.blurb }}</p>
+      <p class="mt-3 text-sm text-ink-500">
+        Build it by copying the Sharecropping Agreements module. The recipe is in
+        <span class="tnum">MODULE_RECIPE.md</span> at the repository root: a pure rules file with
+        tests, a list page, a detail page carrying the decision, a write form in a modal, an audit
+        entry per write, and both routes sharing one state registration.
+      </p>
+    </ui-section-card>
+
+    <ui-section-card heading="Rest of {{ module.group }}">
+      <ul class="space-y-2">
+        @for (sibling of siblings(); track sibling.path) {
+          <li class="flex items-start gap-2.5">
+            <span class="mt-0.5 text-ink-400"><ui-icon [name]="sibling.icon" [size]="15" /></span>
+            <span class="min-w-0">
+              <span class="block text-sm font-medium text-ink-800">{{ sibling.label }}</span>
+              <span class="block text-xs text-ink-500">{{ sibling.blurb }}</span>
+            </span>
+          </li>
+        }
+      </ul>
+    </ui-section-card>
+  </div>
+}

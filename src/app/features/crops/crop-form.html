@@ -1,0 +1,78 @@
+<ui-modal
+  [heading]="heading()"
+  description="A crop's land types are the data behind the suitability gate every agreement is checked against."
+  (dismiss)="closed.emit()"
+>
+  <form (ngSubmit)="submit()" id="crop-form">
+    <ui-form-field label="Name" for="crop-name" [error]="errorFor('name')">
+      <input
+        id="crop-name"
+        type="text"
+        [value]="name()"
+        (input)="onName($event)"
+        placeholder="Paddy (Dhan)"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      />
+    </ui-form-field>
+
+    <fieldset class="mt-3">
+      <legend class="text-sm font-medium text-ink-700">Suitable land types</legend>
+      <p class="mt-0.5 text-xs text-ink-500">
+        An agreement may only plant this crop on a plot of a type listed here.
+      </p>
+
+      <div class="mt-2 space-y-2">
+        @for (type of landTypes; track type) {
+          <div class="flex items-start gap-2">
+            <input
+              [id]="'type-' + type"
+              type="checkbox"
+              [checked]="has(type)"
+              (change)="toggle(type)"
+              class="mt-0.5 rounded border-ink-300 text-brand-600 focus:ring-brand-500"
+            />
+            <label [for]="'type-' + type" class="text-sm text-ink-700">
+              {{ landTypeLabels[type] }}
+            </label>
+          </div>
+        }
+      </div>
+
+      @if (errorFor('suitableLandTypes'); as message) {
+        <p class="mt-1 text-xs text-bad-700" role="alert">{{ message }}</p>
+      }
+    </fieldset>
+
+    <p class="mt-3 rounded-md bg-ink-50 px-3 py-2 text-xs text-ink-600">
+      This choice makes the crop growable on
+      <span class="tnum font-medium text-ink-900">{{ plotCount() }}</span>
+      recorded plot{{ plotCount() === 1 ? '' : 's' }}.
+    </p>
+
+    @if (attempted() && hasErrors()) {
+      <ui-alert
+        tone="warn"
+        message="Some details still need fixing — see the fields marked above."
+        [dismissible]="false"
+      />
+    }
+  </form>
+
+  <ng-container modalActions>
+    <button
+      type="button"
+      (click)="closed.emit()"
+      class="rounded-md border border-ink-200 px-3 py-2 text-sm text-ink-700 hover:border-ink-300"
+    >
+      Cancel
+    </button>
+    <button
+      type="submit"
+      form="crop-form"
+      [disabled]="saving()"
+      class="rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+    >
+      {{ saving() ? 'Saving…' : 'Save crop' }}
+    </button>
+  </ng-container>
+</ui-modal>

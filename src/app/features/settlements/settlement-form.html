@@ -1,0 +1,116 @@
+<ui-modal
+  heading="Prepare a settlement"
+  description="Every figure is derived from what the other modules recorded. Nothing here is typed by hand."
+  (dismiss)="closed.emit()"
+>
+  <form [formGroup]="form" (ngSubmit)="submit()" id="settlement-form">
+    <ui-form-field
+      label="Cycle"
+      for="st-cycleId"
+      [error]="errorFor('cycleId')"
+      hint="Cycles that have produced something and have not been settled."
+    >
+      <select
+        id="st-cycleId"
+        formControlName="cycleId"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      >
+        <option value="">Select a cycle</option>
+        @for (cycle of availableCycles(); track cycle.id) {
+          <option [value]="cycle.id">{{ cycleLabel(cycle.id) }}</option>
+        }
+      </select>
+    </ui-form-field>
+
+    <ui-form-field label="Mode" for="st-mode" [error]="errorFor('mode')">
+      <select
+        id="st-mode"
+        formControlName="mode"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      >
+        @for (mode of modes; track mode) {
+          <option [value]="mode">{{ modeLabels[mode] }}</option>
+        }
+      </select>
+    </ui-form-field>
+
+    <ui-form-field label="Settled on" for="st-settledOn" [error]="errorFor('settledOn')">
+      <input
+        id="st-settledOn"
+        type="date"
+        formControlName="settledOn"
+        class="tnum w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      />
+    </ui-form-field>
+
+    <ui-form-field label="Note" for="st-note" [error]="errorFor('note')">
+      <input
+        id="st-note"
+        type="text"
+        formControlName="note"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      />
+    </ui-form-field>
+
+    @if (preview(); as division) {
+      <dl class="tnum mt-3 space-y-2 rounded-md bg-ink-50 px-3 py-2.5 text-xs text-ink-600">
+        <div class="flex justify-between gap-3">
+          <dt>Net sale proceeds</dt>
+          <dd class="font-medium text-ink-900">{{ taka(division.proceeds) }}</dd>
+        </div>
+        <div class="flex justify-between gap-3">
+          <dt>Costs borne — owner / sharecropper</dt>
+          <dd>{{ taka(division.costs.owner) }} / {{ taka(division.costs.sharecropper) }}</dd>
+        </div>
+        <div class="flex justify-between gap-3 border-t border-ink-200 pt-2">
+          <dt>Owner's share</dt>
+          <dd class="font-medium text-ink-900">{{ taka(division.ownerProceeds) }}</dd>
+        </div>
+        <div class="flex justify-between gap-3">
+          <dt>Sharecropper's share</dt>
+          <dd>{{ taka(division.sharecropperProceeds) }}</dd>
+        </div>
+        <div class="flex justify-between gap-3">
+          <dt>Less dadhon recovered</dt>
+          <dd class="text-bad-700">− {{ taka(division.advanceDeducted) }}</dd>
+        </div>
+        <div class="flex justify-between gap-3 border-t border-ink-200 pt-2">
+          <dt>Sharecropper receives</dt>
+          <dd class="font-medium text-ink-900">{{ taka(division.netToSharecropper) }}</dd>
+        </div>
+        @if (division.advanceRemaining > 0) {
+          <p class="text-warn-700">
+            {{ taka(division.advanceRemaining) }} of dadhon stays outstanding — this season could
+            not clear it.
+          </p>
+        }
+      </dl>
+    }
+
+    @if (attempted() && hasErrors()) {
+      <ui-alert
+        tone="warn"
+        message="Some details still need fixing — see the fields marked above."
+        [dismissible]="false"
+      />
+    }
+  </form>
+
+  <ng-container modalActions>
+    <button
+      type="button"
+      (click)="closed.emit()"
+      class="rounded-md border border-ink-200 px-3 py-2 text-sm text-ink-700 hover:border-ink-300"
+    >
+      Cancel
+    </button>
+    <button
+      type="submit"
+      form="settlement-form"
+      [disabled]="saving()"
+      class="rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+    >
+      {{ saving() ? 'Preparing…' : 'Prepare settlement' }}
+    </button>
+  </ng-container>
+</ui-modal>

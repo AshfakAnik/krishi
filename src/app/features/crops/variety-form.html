@@ -1,0 +1,92 @@
+<ui-modal
+  [heading]="heading()"
+  description="Expected yield drives every harvest and settlement figure downstream."
+  (dismiss)="closed.emit()"
+>
+  <form [formGroup]="form" (ngSubmit)="submit()" id="variety-form">
+    <ui-form-field label="Crop" for="v-cropId" [error]="errorFor('cropId')">
+      <select
+        id="v-cropId"
+        formControlName="cropId"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      >
+        <option value="">Select a crop</option>
+        @for (crop of crops(); track crop.id) {
+          <option [value]="crop.id">{{ crop.name }}</option>
+        }
+      </select>
+    </ui-form-field>
+
+    <ui-form-field
+      label="Variety"
+      for="v-name"
+      [error]="errorFor('name')"
+      hint="Such as BRRI dhan49."
+    >
+      <input
+        id="v-name"
+        type="text"
+        formControlName="name"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      />
+    </ui-form-field>
+
+    <ui-form-field
+      label="Days to harvest"
+      for="v-duration"
+      [error]="errorFor('durationDays')"
+      hint="From sowing to harvest, for planning the calendar."
+    >
+      <input
+        id="v-duration"
+        type="number"
+        min="30"
+        step="1"
+        formControlName="durationDays"
+        class="tnum w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      />
+    </ui-form-field>
+
+    <ui-form-field
+      label="Expected yield (maund per decimal)"
+      for="v-yield"
+      [error]="errorFor('expectedYieldPerDecimal')"
+      [hint]="yieldPreview()"
+    >
+      <input
+        id="v-yield"
+        type="number"
+        min="0"
+        step="0.01"
+        formControlName="expectedYieldPerDecimal"
+        class="tnum w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      />
+    </ui-form-field>
+
+    @if (attempted() && hasErrors()) {
+      <ui-alert
+        tone="warn"
+        message="Some details still need fixing — see the fields marked above."
+        [dismissible]="false"
+      />
+    }
+  </form>
+
+  <ng-container modalActions>
+    <button
+      type="button"
+      (click)="closed.emit()"
+      class="rounded-md border border-ink-200 px-3 py-2 text-sm text-ink-700 hover:border-ink-300"
+    >
+      Cancel
+    </button>
+    <button
+      type="submit"
+      form="variety-form"
+      [disabled]="saving()"
+      class="rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+    >
+      {{ saving() ? 'Saving…' : 'Save variety' }}
+    </button>
+  </ng-container>
+</ui-modal>

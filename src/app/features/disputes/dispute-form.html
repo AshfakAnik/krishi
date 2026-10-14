@@ -1,0 +1,87 @@
+<ui-modal
+  heading="Raise a dispute"
+  description="Say what is wrong and where the work goes back to — a dispute is an instruction, not a shrug."
+  (dismiss)="closed.emit()"
+>
+  <form [formGroup]="form" (ngSubmit)="submit()" id="dispute-form">
+    <ui-form-field
+      label="Settlement"
+      for="d-settlementId"
+      [error]="errorFor('settlementId')"
+      hint="A closed settlement is final — its money has already moved."
+    >
+      <select
+        id="d-settlementId"
+        formControlName="settlementId"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      >
+        <option value="">Select a settlement</option>
+        @for (row of availableSettlements(); track row.id) {
+          <option [value]="row.id">{{ row.reference }}</option>
+        }
+      </select>
+    </ui-form-field>
+
+    <ui-form-field
+      label="Send it back to"
+      for="d-reroute"
+      [error]="errorFor('reroute')"
+      hint="Which figure has to be rechecked."
+    >
+      <select
+        id="d-reroute"
+        formControlName="reroute"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      >
+        @for (point of points; track point) {
+          <option [value]="point">{{ pointLabels[point] }}</option>
+        }
+      </select>
+    </ui-form-field>
+
+    <ui-form-field label="What is wrong" for="d-reason" [error]="errorFor('reason')">
+      <textarea
+        id="d-reason"
+        rows="3"
+        formControlName="reason"
+        placeholder="The pesticide cost was recorded twice against my side."
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      ></textarea>
+    </ui-form-field>
+
+    <ui-form-field label="Raised on" for="d-raisedOn" [error]="errorFor('raisedOn')">
+      <input
+        id="d-raisedOn"
+        type="date"
+        formControlName="raisedOn"
+        class="tnum w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      />
+    </ui-form-field>
+
+    @if (attempted() && hasErrors()) {
+      <ui-alert
+        tone="warn"
+        message="Some details still need fixing — see the fields marked above."
+        [dismissible]="false"
+      />
+    }
+  </form>
+
+  <ng-container modalActions>
+    <button
+      type="button"
+      (click)="closed.emit()"
+      class="rounded-md border border-ink-200 px-3 py-2 text-sm text-ink-700 hover:border-ink-300"
+    >
+      Cancel
+    </button>
+    <button
+      type="submit"
+      form="dispute-form"
+      [disabled]="saving()"
+      class="rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+    >
+      {{ saving() ? 'Raising…' : 'Raise dispute' }}
+    </button>
+  </ng-container>
+</ui-modal>

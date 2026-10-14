@@ -1,0 +1,124 @@
+<ui-modal
+  heading="Record a sale"
+  description="Gross, less market haque and transport, gives the net — the figure the settlement divides."
+  (dismiss)="closed.emit()"
+>
+  <form [formGroup]="form" (ngSubmit)="submit()" id="sale-form">
+    <ui-form-field
+      label="Stock lot"
+      for="s-lotId"
+      [error]="errorFor('lotId')"
+      hint="Only lots with something left in them."
+    >
+      <select
+        id="s-lotId"
+        formControlName="lotId"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      >
+        <option value="">Select a lot</option>
+        @for (lot of availableLots(); track lot.id) {
+          <option [value]="lot.id">{{ lotLabel(lot.id) }}</option>
+        }
+      </select>
+    </ui-form-field>
+
+    <ui-form-field label="Quantity (maund)" for="s-quantity" [error]="errorFor('quantity')">
+      <input
+        id="s-quantity"
+        type="number"
+        min="0"
+        step="1"
+        formControlName="quantity"
+        class="tnum w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      />
+    </ui-form-field>
+
+    <ui-form-field label="Price per maund (৳)" for="s-unitPrice" [error]="errorFor('unitPrice')">
+      <input
+        id="s-unitPrice"
+        type="number"
+        min="0"
+        step="10"
+        formControlName="unitPrice"
+        class="tnum w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      />
+    </ui-form-field>
+
+    <ui-form-field
+      label="Market haque (৳)"
+      for="s-haque"
+      [error]="errorFor('marketHaque')"
+      [hint]="haqueHint()"
+    >
+      <input
+        id="s-haque"
+        type="number"
+        min="0"
+        step="10"
+        formControlName="marketHaque"
+        class="tnum w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      />
+    </ui-form-field>
+
+    <ui-form-field label="Transport (৳)" for="s-transport" [error]="errorFor('transportCost')">
+      <input
+        id="s-transport"
+        type="number"
+        min="0"
+        step="10"
+        formControlName="transportCost"
+        class="tnum w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      />
+    </ui-form-field>
+
+    <ui-form-field label="Buyer" for="s-buyer" [error]="errorFor('buyer')">
+      <input
+        id="s-buyer"
+        type="text"
+        formControlName="buyer"
+        placeholder="Boalia Haat — Kashem Beparee"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      />
+    </ui-form-field>
+
+    <ui-form-field label="Sold on" for="s-soldOn" [error]="errorFor('soldOn')">
+      <input
+        id="s-soldOn"
+        type="date"
+        formControlName="soldOn"
+        class="tnum w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      />
+    </ui-form-field>
+
+    <div class="tnum mt-2 rounded-md bg-ink-50 px-3 py-2 text-xs text-ink-600">
+      Gross {{ taka(totals().gross) }} · deductions {{ taka(totals().deductions) }} · net
+      <span class="font-medium text-ink-900">{{ taka(totals().net) }}</span>
+    </div>
+
+    @if (attempted() && hasErrors()) {
+      <ui-alert
+        tone="warn"
+        message="Some details still need fixing — see the fields marked above."
+        [dismissible]="false"
+      />
+    }
+  </form>
+
+  <ng-container modalActions>
+    <button
+      type="button"
+      (click)="closed.emit()"
+      class="rounded-md border border-ink-200 px-3 py-2 text-sm text-ink-700 hover:border-ink-300"
+    >
+      Cancel
+    </button>
+    <button
+      type="submit"
+      form="sale-form"
+      [disabled]="saving()"
+      class="rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+    >
+      {{ saving() ? 'Recording…' : 'Record sale' }}
+    </button>
+  </ng-container>
+</ui-modal>

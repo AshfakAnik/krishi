@@ -1,0 +1,136 @@
+<ui-page-header
+  eyebrow="Settlement & Finance"
+  title="Disputes"
+  subtitle="Each objection names where the work goes back to, so resolving it is an instruction."
+>
+  <button
+    type="button"
+    (click)="formOpen.set(true)"
+    class="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700"
+  >
+    <ui-icon name="alert" [size]="15" />
+    Raise a dispute
+  </button>
+</ui-page-header>
+
+@if (error(); as message) {
+  <ui-alert tone="bad" [message]="message" (dismissed)="clearError()" />
+}
+
+@if (actionError(); as message) {
+  <ui-alert tone="warn" [message]="message" (dismissed)="actionError.set('')" />
+}
+
+<div class="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+  <ui-kpi-tile
+    label="Open"
+    [value]="open().length"
+    [tone]="open().length ? 'bad' : 'ok'"
+    hint="Awaiting a recomputation"
+  />
+  <ui-kpi-tile label="Closed" [value]="settled().length" hint="Resolved or withdrawn" />
+</div>
+
+<div class="space-y-4">
+  <ui-section-card heading="Open" [note]="open().length + ' waiting'" [padded]="false">
+    @if (loading()) {
+      <p class="px-4 py-6 text-center text-sm text-ink-500">Loading disputes…</p>
+    } @else if (!open().length) {
+      <ui-empty-state
+        icon="check-shield"
+        title="Nothing disputed"
+        hint="Every settlement has been accepted as it stands."
+      />
+    } @else {
+      <ul class="divide-y divide-ink-100">
+        @for (row of open(); track row.id) {
+          <li class="px-4 py-3">
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:gap-4">
+              <span class="min-w-0 flex-1">
+                <span class="block text-sm font-medium text-ink-900">
+                  {{ row.reference }} · {{ settlementRef(row) }}
+                </span>
+                <span class="block text-xs text-ink-500">
+                  raised {{ date(row.raisedOn) }} by {{ row.raisedBy }}
+                </span>
+                <p class="mt-1 text-sm text-ink-700">{{ row.reason }}</p>
+                <p class="mt-1 text-xs text-ink-600">
+                  Goes back to
+                  <a
+                    [routerLink]="target(row).path"
+                    class="font-medium text-brand-700 hover:underline"
+                  >
+                    {{ target(row).label }}
+                  </a>
+                  — {{ pointLabels[row.reroute] }}
+                </p>
+              </span>
+              <ui-status-badge [label]="statusLabels[row.status]" [tone]="statusTone(row)" />
+            </div>
+
+            @if (mayDecide()) {
+              <div class="mt-3">
+                <label [for]="'res-' + row.id" class="block text-xs font-medium text-ink-700">
+                  What was done about it
+                </label>
+                <textarea
+                  [id]="'res-' + row.id"
+                  rows="2"
+                  [value]="resolutionFor(row)"
+                  (input)="onResolution(row, $event)"
+                  class="mt-1 w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+                  placeholder="Removed the duplicated pesticide line and recomputed."
+                ></textarea>
+                <div class="mt-2 flex flex-col gap-2 sm:flex-row">
+                  <button
+                    type="button"
+                    (click)="resolveDispute(row)"
+                    [disabled]="saving()"
+                    class="rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+                  >
+                    Resolve & send back
+                  </button>
+                  <button
+                    type="button"
+                    (click)="withdrawDispute(row)"
+                    [disabled]="saving()"
+                    class="rounded-md border border-ink-200 px-3 py-2 text-sm font-medium text-ink-700 hover:border-ink-400 disabled:opacity-60"
+                  >
+                    Withdraw — figures stand
+                  </button>
+                </div>
+              </div>
+            }
+          </li>
+        }
+      </ul>
+    }
+  </ui-section-card>
+
+  <ui-section-card heading="Closed" [note]="settled().length + ' closed'" [padded]="false">
+    @if (!settled().length) {
+      <p class="px-4 py-6 text-center text-sm text-ink-500">Nothing closed yet.</p>
+    } @else {
+      <ul class="divide-y divide-ink-100">
+        @for (row of settled(); track row.id) {
+          <li class="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-start sm:gap-4">
+            <span class="min-w-0 flex-1">
+              <span class="block text-sm font-medium text-ink-900">
+                {{ row.reference }} · {{ settlementRef(row) }}
+              </span>
+              <p class="mt-1 text-sm text-ink-700">{{ row.reason }}</p>
+              <p class="mt-1 text-xs text-ink-500">
+                {{ row.resolvedBy }} · {{ date(row.resolvedOn) }} — {{ row.resolution }}
+              </p>
+            </span>
+            <ui-status-badge [label]="statusLabels[row.status]" [tone]="statusTone(row)" />
+          </li>
+        }
+      </ul>
+    }
+  </ui-section-card>
+</div>
+
+@if (formOpen()) {
+  <app-dispute-form (raised)="onRaised($event)" (closed)="formOpen.set(false)" />
+}

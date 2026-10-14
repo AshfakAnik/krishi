@@ -1,0 +1,47 @@
+<ui-page-header
+  eyebrow="Cultivation"
+  title="Crop Monitoring"
+  subtitle="AI scans, field visits and damage reports. A recorded loss adjusts the cycle's expected yield."
+>
+  <button
+    type="button"
+    (click)="formOpen.set(true)"
+    class="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700"
+  >
+    <ui-icon name="gauge" [size]="15" />
+    Record observation
+  </button>
+</ui-page-header>
+
+@if (error(); as message) {
+  <ui-alert tone="bad" [message]="message" (dismissed)="clearError()" />
+}
+
+<div class="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+  <ui-kpi-tile
+    label="Damage recorded"
+    [value]="damageCount()"
+    [tone]="damageCount() ? 'bad' : 'ok'"
+    hint="Observations that moved a yield"
+  />
+  <ui-kpi-tile
+    label="Harvest lost"
+    [value]="maund(maundLost())"
+    [tone]="maundLost() ? 'warn' : 'neutral'"
+    hint="Across every adjustment"
+  />
+  <ui-kpi-tile label="AI scans" [value]="scanCount()" hint="Automated observations" />
+</div>
+
+<ui-data-table
+  [columns]="columns"
+  [rows]="rows()"
+  [loading]="loading()"
+  searchPlaceholder="Search by reference, cycle, plot or cause"
+  emptyTitle="Nothing observed yet"
+  emptyHint="Record a scan or a field visit against a live cycle."
+/>
+
+@if (formOpen()) {
+  <app-observation-form (closed)="formOpen.set(false)" />
+}

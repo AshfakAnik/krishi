@@ -1,0 +1,119 @@
+<ui-page-header
+  eyebrow="Agreements"
+  title="Sharecropping Agreements"
+  subtitle="Normal and Tevaga agreements: drafted, approved, activated and revoked."
+>
+  @if (session.canDraftAgreement()) {
+    <button
+      type="button"
+      (click)="formOpen.set(true)"
+      class="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700"
+    >
+      <ui-icon name="edit" [size]="15" />
+      New agreement
+    </button>
+  }
+</ui-page-header>
+
+@if (error(); as message) {
+  <ui-alert tone="bad" [message]="message" (dismissed)="clearError()" />
+}
+
+@if (undoable(); as discarded) {
+  <div
+    role="status"
+    class="mb-4 flex flex-col gap-2 rounded-md border border-ink-200 bg-ink-50 px-3 py-2 text-sm text-ink-700 sm:flex-row sm:items-center"
+  >
+    <span class="min-w-0 flex-1"> Draft {{ discarded.reference }} discarded. </span>
+    <button
+      type="button"
+      (click)="undoDiscard()"
+      class="shrink-0 rounded-md border border-ink-300 px-2.5 py-1 text-sm font-medium text-ink-900 hover:bg-white"
+    >
+      Undo
+    </button>
+  </div>
+}
+
+<div class="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+  <ui-kpi-tile
+    label="Awaiting approval"
+    [value]="pending().length"
+    [tone]="queueTone()"
+    hint="Agreements a decision is owed on"
+  />
+  <ui-kpi-tile
+    label="Active agreements"
+    [value]="activeCount()"
+    tone="ok"
+    hint="Land is committed"
+  />
+  <ui-kpi-tile
+    label="Committed area"
+    [value]="committedArea() + ' decimal'"
+    hint="Held by active agreements"
+  />
+  <ui-kpi-tile
+    label="Outstanding dadhon"
+    [value]="taka(outstandingAdvance())"
+    [tone]="outstandingAdvance() ? 'warn' : 'neutral'"
+    hint="Deducted at settlement"
+  />
+</div>
+
+@if (session.canApproveAgreement()) {
+  <div class="mb-6">
+    <ui-section-card
+      heading="Approval queue"
+      [note]="pending().length + ' waiting'"
+      [padded]="false"
+    >
+      @if (!pending().length) {
+        <ui-empty-state
+          icon="check-shield"
+          title="Nothing waiting"
+          hint="Every submitted agreement has been decided."
+        />
+      } @else {
+        <ul class="divide-y divide-ink-100">
+          @for (row of pending(); track row.id) {
+            <li>
+              <a
+                [routerLink]="['/agreements', row.id]"
+                class="flex flex-col gap-2 px-4 py-3 hover:bg-brand-100/40 sm:flex-row sm:items-center sm:gap-4"
+              >
+                <span class="min-w-0 flex-1">
+                  <span class="block text-sm font-medium text-brand-700">
+                    {{ row.reference }} · {{ landName(row.landId) }}
+                  </span>
+                  <span class="block text-xs text-ink-500">
+                    {{ partyName(row.sharecropperId) }} · {{ seasonName(row.seasonId) }} · submitted
+                    {{ submittedOn(row) }} by {{ row.submittedBy }}
+                  </span>
+                </span>
+                <span class="tnum shrink-0 text-sm text-ink-700">
+                  {{ taka(row.advanceAmount) }} advance
+                </span>
+                <ui-status-badge label="Awaiting approval" tone="warn" />
+              </a>
+            </li>
+          }
+        </ul>
+      }
+    </ui-section-card>
+  </div>
+}
+
+<ui-data-table
+  [columns]="columns"
+  [rows]="rows()"
+  [loading]="loading()"
+  [rowLink]="rowLink"
+  searchPlaceholder="Search by reference, land or sharecropper"
+  emptyTitle="No agreements yet"
+  emptyHint="Draft one to commit a plot to a sharecropper for a season."
+/>
+
+@if (formOpen()) {
+  <app-agreement-form (closed)="formOpen.set(false)" />
+}

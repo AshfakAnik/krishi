@@ -1,0 +1,124 @@
+<ui-modal
+  heading="Add a ledger entry"
+  description="For what a settlement did not raise — a reimbursement, a part payment, a transfer in kind."
+  (dismiss)="closed.emit()"
+>
+  <form [formGroup]="form" (ngSubmit)="submit()" id="finance-form">
+    <ui-form-field label="Kind" for="f-kind" [error]="errorFor('kind')">
+      <select
+        id="f-kind"
+        formControlName="kind"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      >
+        @for (kind of kinds; track kind) {
+          <option [value]="kind">{{ kindLabels[kind] }}</option>
+        }
+      </select>
+    </ui-form-field>
+
+    <ui-form-field label="Party" for="f-partyId" [error]="errorFor('partyId')">
+      <select
+        id="f-partyId"
+        formControlName="partyId"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      >
+        <option value="">Select a person</option>
+        @for (party of parties(); track party.id) {
+          <option [value]="party.id">{{ party.name }} · {{ party.village }}</option>
+        }
+      </select>
+    </ui-form-field>
+
+    @if (inKind()) {
+      <ui-form-field
+        label="Quantity (maund)"
+        for="f-quantity"
+        [error]="errorFor('quantity')"
+        hint="A transfer moves produce, not cash."
+      >
+        <input
+          id="f-quantity"
+          type="number"
+          min="0"
+          step="1"
+          formControlName="quantity"
+          class="tnum w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+        />
+      </ui-form-field>
+    } @else {
+      <ui-form-field label="Amount (৳)" for="f-amount" [error]="errorFor('amount')">
+        <input
+          id="f-amount"
+          type="number"
+          min="0"
+          step="100"
+          formControlName="amount"
+          class="tnum w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+        />
+      </ui-form-field>
+    }
+
+    <ui-form-field
+      label="Settlement"
+      for="f-settlementId"
+      [error]="errorFor('settlementId')"
+      optional
+      hint="Leave blank for a line not tied to one."
+    >
+      <select
+        id="f-settlementId"
+        formControlName="settlementId"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      >
+        <option value="">None</option>
+        @for (row of settlements(); track row.id) {
+          <option [value]="row.id">{{ row.reference }}</option>
+        }
+      </select>
+    </ui-form-field>
+
+    <ui-form-field label="Raised on" for="f-raisedOn" [error]="errorFor('raisedOn')">
+      <input
+        id="f-raisedOn"
+        type="date"
+        formControlName="raisedOn"
+        class="tnum w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      />
+    </ui-form-field>
+
+    <ui-form-field label="Note" for="f-note" [error]="errorFor('note')">
+      <input
+        id="f-note"
+        type="text"
+        formControlName="note"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      />
+    </ui-form-field>
+
+    @if (attempted() && hasErrors()) {
+      <ui-alert
+        tone="warn"
+        message="Some details still need fixing — see the fields marked above."
+        [dismissible]="false"
+      />
+    }
+  </form>
+
+  <ng-container modalActions>
+    <button
+      type="button"
+      (click)="closed.emit()"
+      class="rounded-md border border-ink-200 px-3 py-2 text-sm text-ink-700 hover:border-ink-300"
+    >
+      Cancel
+    </button>
+    <button
+      type="submit"
+      form="finance-form"
+      [disabled]="saving()"
+      class="rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+    >
+      {{ saving() ? 'Adding…' : 'Add entry' }}
+    </button>
+  </ng-container>
+</ui-modal>

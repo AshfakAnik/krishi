@@ -1,0 +1,120 @@
+<ui-modal
+  [heading]="heading()"
+  description="Dag-wise plots. Area sets the dadhon ceiling; land type gates which crops may be grown."
+  (dismiss)="closed.emit()"
+>
+  <form [formGroup]="form" (ngSubmit)="submit()" id="land-form">
+    @if (lockNote(); as note) {
+      <ui-alert tone="neutral" [message]="note" [dismissible]="false" />
+    }
+
+    <ui-form-field
+      label="Dag code"
+      for="code"
+      [error]="errorFor('code')"
+      hint="Such as SHB-DAG-104."
+    >
+      <input
+        id="code"
+        type="text"
+        formControlName="code"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      />
+    </ui-form-field>
+
+    <ui-form-field label="Local name" for="name" [error]="errorFor('name')">
+      <input
+        id="name"
+        type="text"
+        formControlName="name"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      />
+    </ui-form-field>
+
+    <ui-form-field label="Owner" for="ownerId" [error]="errorFor('ownerId')">
+      <select
+        id="ownerId"
+        formControlName="ownerId"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      >
+        <option value="">Select the owner</option>
+        @for (owner of owners(); track owner.id) {
+          <option [value]="owner.id">{{ owner.name }} · {{ owner.village }}</option>
+        }
+      </select>
+    </ui-form-field>
+
+    <ui-form-field
+      label="Land type"
+      for="landType"
+      [error]="errorFor('landType')"
+      hint="Dhani is low-lying paddy land; Vita is raised homestead land."
+    >
+      <select
+        id="landType"
+        formControlName="landType"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none disabled:bg-ink-50 disabled:text-ink-500"
+      >
+        @for (type of landTypes; track type) {
+          <option [value]="type">{{ landTypeLabels[type] }}</option>
+        }
+      </select>
+    </ui-form-field>
+
+    <ui-form-field
+      label="Area (decimal)"
+      for="area"
+      [error]="errorFor('area')"
+      [hint]="ceilingHint()"
+    >
+      <input
+        id="area"
+        type="number"
+        min="1"
+        step="1"
+        formControlName="area"
+        class="tnum w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none disabled:bg-ink-50 disabled:text-ink-500"
+      />
+    </ui-form-field>
+
+    <ui-form-field
+      label="Location"
+      for="location"
+      [error]="errorFor('location')"
+      hint="Village, mouza and dag, so the plot can be found on the ground."
+    >
+      <input
+        id="location"
+        type="text"
+        formControlName="location"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      />
+    </ui-form-field>
+
+    @if (attempted() && hasErrors()) {
+      <ui-alert
+        tone="warn"
+        message="Some details still need fixing — see the fields marked above."
+        [dismissible]="false"
+      />
+    }
+  </form>
+
+  <ng-container modalActions>
+    <button
+      type="button"
+      (click)="closed.emit()"
+      class="rounded-md border border-ink-200 px-3 py-2 text-sm text-ink-700 hover:border-ink-300"
+    >
+      Cancel
+    </button>
+    <button
+      type="submit"
+      form="land-form"
+      [disabled]="saving()"
+      class="rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+    >
+      {{ saving() ? 'Saving…' : 'Save plot' }}
+    </button>
+  </ng-container>
+</ui-modal>

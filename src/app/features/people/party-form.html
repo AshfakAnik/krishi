@@ -1,0 +1,101 @@
+<ui-modal
+  [heading]="heading()"
+  description="Owners, sharecroppers and staff share one directory — the diagram treats them as parties to an agreement."
+  (dismiss)="closed.emit()"
+>
+  <form [formGroup]="form" (ngSubmit)="submit()" id="party-form">
+    <ui-form-field label="Full name" for="p-name" [error]="errorFor('name')">
+      <input
+        id="p-name"
+        type="text"
+        formControlName="name"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      />
+    </ui-form-field>
+
+    <ui-form-field
+      label="Role"
+      for="p-role"
+      [error]="errorFor('role')"
+      hint="The role decides what this person may do, and which lists they appear in."
+    >
+      <select
+        id="p-role"
+        formControlName="role"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      >
+        @for (role of roles; track role) {
+          <option [value]="role">{{ roleLabels[role] }}</option>
+        }
+      </select>
+    </ui-form-field>
+
+    <ui-form-field
+      label="Mobile"
+      for="p-phone"
+      [error]="errorFor('phone')"
+      hint="Eleven digits opening 01, such as 01711-204588."
+    >
+      <input
+        id="p-phone"
+        type="tel"
+        inputmode="numeric"
+        formControlName="phone"
+        class="tnum w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      />
+    </ui-form-field>
+
+    <ui-form-field label="Village" for="p-village" [error]="errorFor('village')">
+      <input
+        id="p-village"
+        type="text"
+        formControlName="village"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      />
+    </ui-form-field>
+
+    @if (isSharecropper()) {
+      <ui-form-field
+        label="Seasons worked"
+        for="p-seasons"
+        [error]="errorFor('seasonsWorked')"
+        hint="How many seasons this sharecropper has worked with this owner."
+      >
+        <input
+          id="p-seasons"
+          type="number"
+          min="0"
+          step="1"
+          formControlName="seasonsWorked"
+          class="tnum w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+        />
+      </ui-form-field>
+    }
+
+    @if (attempted() && hasErrors()) {
+      <ui-alert
+        tone="warn"
+        message="Some details still need fixing — see the fields marked above."
+        [dismissible]="false"
+      />
+    }
+  </form>
+
+  <ng-container modalActions>
+    <button
+      type="button"
+      (click)="closed.emit()"
+      class="rounded-md border border-ink-200 px-3 py-2 text-sm text-ink-700 hover:border-ink-300"
+    >
+      Cancel
+    </button>
+    <button
+      type="submit"
+      form="party-form"
+      [disabled]="saving()"
+      class="rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+    >
+      {{ saving() ? 'Saving…' : 'Save person' }}
+    </button>
+  </ng-container>
+</ui-modal>

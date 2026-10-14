@@ -1,0 +1,179 @@
+<main class="flex min-h-screen items-center justify-center px-4 py-10">
+  <div class="w-full max-w-sm">
+    <div class="mb-6 flex items-center gap-2.5">
+      <span class="text-brand-600"><ui-icon name="leaf" [size]="26" /></span>
+      <div>
+        <h1 class="text-xl font-semibold text-ink-900">Krishi</h1>
+        <p class="text-sm text-ink-500">Smart Farming & Sharecropping Management</p>
+      </div>
+    </div>
+
+    <div class="rounded-lg border border-ink-200 bg-white">
+      <div class="border-b border-ink-100 px-4 py-3">
+        <h2 class="text-sm font-semibold text-ink-800">Create an account</h2>
+        <p class="mt-0.5 text-xs text-ink-500">
+          Owner and Sharecropper accounts need an administrator's approval before they can sign in.
+        </p>
+      </div>
+
+      @if (done(); as message) {
+        <div class="p-4">
+          <ui-alert tone="ok" [message]="message" [dismissible]="false" />
+          <a
+            routerLink="/sign-in"
+            class="mt-3 inline-block text-sm font-medium text-brand-600 hover:text-brand-700"
+          >
+            Back to sign in
+          </a>
+        </div>
+      } @else {
+        <form [formGroup]="form" (ngSubmit)="submit()" class="p-4">
+          <ui-form-field label="Full name" for="su-name" [error]="errorFor('name')">
+            <input
+              id="su-name"
+              type="text"
+              formControlName="name"
+              class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+            />
+          </ui-form-field>
+
+          <ui-form-field label="Username" for="su-username" [error]="errorFor('username')">
+            <input
+              id="su-username"
+              type="text"
+              formControlName="username"
+              autocomplete="username"
+              placeholder="e.g. rahim.owner"
+              class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+            />
+          </ui-form-field>
+
+          <ui-form-field label="Email" for="su-email" [error]="errorFor('email')">
+            <input
+              id="su-email"
+              type="email"
+              formControlName="email"
+              autocomplete="email"
+              class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+            />
+          </ui-form-field>
+
+          <ui-form-field
+            label="Role"
+            for="su-role"
+            [error]="errorFor('adminCode')"
+            hint="The role decides what this account may do once approved."
+          >
+            <select
+              id="su-role"
+              formControlName="role"
+              class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+            >
+              @for (role of roles; track role) {
+                <option [value]="role">{{ roleLabels[role] }}</option>
+              }
+            </select>
+          </ui-form-field>
+
+          @if (isAdmin()) {
+            <ui-form-field
+              label="Admin invite code"
+              for="su-admin-code"
+              [error]="errorFor('adminCode')"
+              hint="Provided by the organization — required to create an administrator account."
+            >
+              <input
+                id="su-admin-code"
+                type="password"
+                formControlName="adminCode"
+                class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+              />
+            </ui-form-field>
+          }
+
+          <ui-form-field label="Mobile" for="su-phone" [error]="errorFor('phone')">
+            <input
+              id="su-phone"
+              type="tel"
+              inputmode="numeric"
+              formControlName="phone"
+              class="tnum w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+            />
+          </ui-form-field>
+
+          <ui-form-field label="Village" for="su-village" [error]="errorFor('village')">
+            <input
+              id="su-village"
+              type="text"
+              formControlName="village"
+              class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+            />
+          </ui-form-field>
+
+          <ui-form-field label="Password" for="su-password" [error]="errorFor('password')">
+            <input
+              id="su-password"
+              [type]="showPassword() ? 'text' : 'password'"
+              formControlName="password"
+              autocomplete="new-password"
+              placeholder="At least 8 characters"
+              class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+            />
+          </ui-form-field>
+
+          <div class="mb-2 flex items-center gap-2">
+            <input
+              id="su-show-password"
+              type="checkbox"
+              [checked]="showPassword()"
+              (change)="showPassword.set(!showPassword())"
+              class="rounded border-ink-300 text-brand-600 focus:ring-brand-500"
+            />
+            <label for="su-show-password" class="text-sm text-ink-700">Show password</label>
+          </div>
+
+          <ui-form-field label="Confirm password" for="su-confirm" [error]="errorFor('confirmPassword')">
+            <input
+              id="su-confirm"
+              [type]="showConfirmPassword() ? 'text' : 'password'"
+              formControlName="confirmPassword"
+              autocomplete="new-password"
+              placeholder="Re-enter the same password"
+              class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+            />
+          </ui-form-field>
+
+          <div class="mb-2 flex items-center gap-2">
+            <input
+              id="su-show-confirm"
+              type="checkbox"
+              [checked]="showConfirmPassword()"
+              (change)="showConfirmPassword.set(!showConfirmPassword())"
+              class="rounded border-ink-300 text-brand-600 focus:ring-brand-500"
+            />
+            <label for="su-show-confirm" class="text-sm text-ink-700">Show password</label>
+          </div>
+
+          @if (error(); as message) {
+            <ui-alert tone="bad" [message]="message" [dismissible]="false" />
+          }
+
+          <button
+            type="submit"
+            [disabled]="submitting()"
+            class="mt-2 w-full rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+          >
+            {{ submitting() ? 'Creating account…' : 'Create account' }}
+          </button>
+
+          <a
+            routerLink="/sign-in"
+            class="mt-3 block text-center text-sm font-medium text-brand-600 hover:text-brand-700"
+          >
+            Already have an account? Sign in
+          </a>
+        </form>
+      }
+    </div>
+  </div>
+</main>

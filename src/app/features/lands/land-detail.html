@@ -1,0 +1,159 @@
+@if (land(); as row) {
+  <ui-page-header
+    eyebrow="Land"
+    [title]="row.name"
+    [subtitle]="row.code + ' · ' + row.location"
+    backLink="/lands"
+    backLabel="All lands"
+  >
+    @if (held()) {
+      <ui-status-badge label="Committed" tone="warn" />
+    } @else {
+      <ui-status-badge label="Free" tone="ok" />
+    }
+
+    <button
+      type="button"
+      (click)="editing.set(true)"
+      class="inline-flex items-center justify-center gap-1.5 rounded-md border border-ink-200 px-3 py-2 text-sm font-medium text-ink-700 hover:border-brand-400 hover:text-brand-700"
+    >
+      <ui-icon name="edit" [size]="15" />
+      Edit plot
+    </button>
+  </ui-page-header>
+
+  @if (error(); as message) {
+    <ui-alert tone="bad" [message]="message" (dismissed)="clearError()" />
+  }
+
+  @if (locked().length) {
+    <ui-alert
+      tone="neutral"
+      message="An agreement holds this plot, so its area and land type are fixed until it is released."
+      [dismissible]="false"
+    />
+  }
+
+  <div class="grid gap-4 lg:grid-cols-3">
+    <div class="space-y-4 lg:col-span-2">
+      <ui-section-card heading="Plot">
+        <ui-field-list [fields]="summary()" />
+      </ui-section-card>
+
+      <ui-section-card heading="Agreements on this plot" [padded]="false">
+        @if (!agreements().length) {
+          <p class="px-4 py-4 text-sm text-ink-500">
+            This plot has never been committed to a sharecropper.
+          </p>
+        } @else {
+          <table class="w-full border-collapse text-sm">
+            <thead>
+              <tr class="border-b border-ink-200 bg-ink-50 text-left">
+                <th scope="col" class="px-4 py-2 font-medium text-ink-600">Reference</th>
+                <th scope="col" class="px-4 py-2 font-medium text-ink-600">Season</th>
+                <th scope="col" class="px-4 py-2 font-medium text-ink-600">Sharecropper</th>
+                <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">Advance</th>
+                <th scope="col" class="px-4 py-2 font-medium text-ink-600">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of agreements(); track item.id) {
+                <tr class="border-b border-ink-100 last:border-0">
+                  <td class="tnum px-4 py-2">{{ item.reference }}</td>
+                  <td class="px-4 py-2">{{ seasonName(item.seasonId) }}</td>
+                  <td class="px-4 py-2">{{ partyName(item.sharecropperId) }}</td>
+                  <td class="tnum px-4 py-2 text-right">{{ taka(item.advanceAmount) }}</td>
+                  <td class="px-4 py-2">
+                    <ui-status-badge [label]="agreementLabel(item)" [tone]="agreementBadge(item)" />
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </ui-section-card>
+
+      <ui-section-card heading="Cultivation history" [padded]="false">
+        @if (!cycles().length) {
+          <p class="px-4 py-4 text-sm text-ink-500">Nothing has been grown here yet.</p>
+        } @else {
+          <table class="w-full border-collapse text-sm">
+            <thead>
+              <tr class="border-b border-ink-200 bg-ink-50 text-left">
+                <th scope="col" class="px-4 py-2 font-medium text-ink-600">Cycle</th>
+                <th scope="col" class="px-4 py-2 font-medium text-ink-600">Season</th>
+                <th scope="col" class="px-4 py-2 font-medium text-ink-600">Started</th>
+                <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">Expected</th>
+                <th scope="col" class="px-4 py-2 font-medium text-ink-600">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of cycles(); track item.id) {
+                <tr class="border-b border-ink-100 last:border-0">
+                  <td class="tnum px-4 py-2">{{ item.reference }}</td>
+                  <td class="px-4 py-2">{{ seasonName(item.seasonId) }}</td>
+                  <td class="tnum px-4 py-2">{{ date(item.startedOn) }}</td>
+                  <td class="tnum px-4 py-2 text-right">{{ maund(item.expectedYield) }}</td>
+                  <td class="px-4 py-2 text-ink-600">{{ cycleLabel(item) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </ui-section-card>
+    </div>
+
+    <div class="space-y-4">
+      <ui-section-card heading="Dadhon this plot carries">
+        <dl class="space-y-3 text-sm">
+          <div class="flex items-baseline justify-between gap-3">
+            <dt class="text-ink-500">Ceiling</dt>
+            <dd class="tnum font-medium text-ink-900">{{ taka(ceiling()) }}</dd>
+          </div>
+          <div class="flex items-baseline justify-between gap-3">
+            <dt class="text-ink-500">Committed</dt>
+            <dd class="tnum font-medium text-ink-900">{{ taka(committed()) }}</dd>
+          </div>
+          <div class="flex items-baseline justify-between gap-3 border-t border-ink-100 pt-3">
+            <dt class="text-ink-500">Left to draw</dt>
+            <dd class="tnum font-medium text-ink-900">{{ taka(available()) }}</dd>
+          </div>
+        </dl>
+        <p class="mt-4 text-xs text-ink-600">
+          The ceiling is a function of area, at ৳ 200 per decimal. It is why area is locked while an
+          agreement holds the plot.
+        </p>
+      </ui-section-card>
+
+      <ui-section-card heading="What may be grown here">
+        @if (!growable().length) {
+          <p class="text-sm text-ink-500">No recorded crop suits this land type.</p>
+        } @else {
+          <ul class="space-y-1.5 text-sm text-ink-700">
+            @for (crop of growable(); track crop.id) {
+              <li class="flex items-center gap-2">
+                <span class="text-brand-600"><ui-icon name="leaf" [size]="14" /></span>
+                {{ crop.name }}
+              </li>
+            }
+          </ul>
+        }
+        <p class="mt-4 text-xs text-ink-600">
+          Lane 1's "crop suitable for land type" gate, read from the plot's side.
+        </p>
+      </ui-section-card>
+
+      @if (blocker(); as reason) {
+        <ui-section-card heading="Why this plot cannot be removed">
+          <p class="text-sm text-ink-600">{{ reason }}</p>
+        </ui-section-card>
+      }
+    </div>
+  </div>
+
+  @if (editing()) {
+    <app-land-form [editing]="row" (closed)="editing.set(false)" />
+  }
+} @else {
+  <p class="py-16 text-center text-sm text-ink-500">Loading plot…</p>
+}

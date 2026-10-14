@@ -1,0 +1,157 @@
+@if (crop(); as row) {
+  <ui-page-header
+    eyebrow="Crop"
+    [title]="row.name"
+    [subtitle]="referenceNote()"
+    backLink="/crops"
+    backLabel="All crops"
+  >
+    <button
+      type="button"
+      (click)="editingVariety.set('new')"
+      class="inline-flex items-center justify-center gap-1.5 rounded-md border border-ink-200 px-3 py-2 text-sm font-medium text-ink-700 hover:border-brand-400 hover:text-brand-700"
+    >
+      <ui-icon name="leaf" [size]="15" />
+      New variety
+    </button>
+    <button
+      type="button"
+      (click)="editingCrop.set(true)"
+      class="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700"
+    >
+      <ui-icon name="edit" [size]="15" />
+      Edit crop
+    </button>
+  </ui-page-header>
+
+  @if (error(); as message) {
+    <ui-alert tone="bad" [message]="message" (dismissed)="clearError()" />
+  }
+
+  @if (blocked(); as message) {
+    <ui-alert tone="warn" [message]="message" (dismissed)="blocked.set('')" />
+  }
+
+  @if (undoable(); as removed) {
+    <div
+      role="status"
+      class="mb-4 flex flex-col gap-2 rounded-md border border-ink-200 bg-ink-50 px-3 py-2 text-sm text-ink-700 sm:flex-row sm:items-center"
+    >
+      <span class="min-w-0 flex-1">{{ removed.name }} removed.</span>
+      <button
+        type="button"
+        (click)="undoRemove()"
+        class="shrink-0 rounded-md border border-ink-300 px-2.5 py-1 text-sm font-medium text-ink-900 hover:bg-white"
+      >
+        Undo
+      </button>
+    </div>
+  }
+
+  <div class="grid gap-4 lg:grid-cols-3">
+    <div class="space-y-4 lg:col-span-2">
+      <ui-section-card heading="Crop">
+        <ui-field-list [fields]="summary()" />
+      </ui-section-card>
+
+      <ui-section-card heading="Varieties" [padded]="false">
+        @if (!varieties().length) {
+          <p class="px-4 py-4 text-sm text-ink-500">
+            No varieties yet. A crop without one cannot be chosen in an agreement, because the
+            expected yield comes from the variety.
+          </p>
+        } @else {
+          <table class="w-full border-collapse text-sm">
+            <thead>
+              <tr class="border-b border-ink-200 bg-ink-50 text-left">
+                <th scope="col" class="px-4 py-2 font-medium text-ink-600">Variety</th>
+                <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">Days</th>
+                <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">
+                  Maund / decimal
+                </th>
+                <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">
+                  On the largest plot
+                </th>
+                <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">
+                  <span class="sr-only">Actions</span>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (variety of varieties(); track variety.id) {
+                <tr class="border-b border-ink-100 last:border-0">
+                  <td class="px-4 py-2 font-medium text-ink-900">{{ variety.name }}</td>
+                  <td class="tnum px-4 py-2 text-right">{{ variety.durationDays }}</td>
+                  <td class="tnum px-4 py-2 text-right">{{ variety.expectedYieldPerDecimal }}</td>
+                  <td class="tnum px-4 py-2 text-right">{{ yieldOn(variety) }}</td>
+                  <td class="px-4 py-2">
+                    <div class="flex justify-end gap-1">
+                      <button
+                        type="button"
+                        (click)="editingVariety.set(variety)"
+                        class="rounded-md border border-ink-200 px-2.5 py-1 text-xs font-medium text-ink-700 hover:border-brand-400 hover:text-brand-700"
+                        [attr.aria-label]="'Edit ' + variety.name"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        (click)="removeVariety(variety)"
+                        class="rounded-md border border-ink-200 px-2.5 py-1 text-xs font-medium text-bad-700 hover:border-bad-600 hover:bg-bad-100"
+                        [attr.aria-label]="'Remove ' + variety.name"
+                        [title]="varietyBlockerFor(variety) || 'Remove this variety'"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </ui-section-card>
+    </div>
+
+    <div class="space-y-4">
+      <ui-section-card heading="Where it may be grown">
+        @if (!plots().length) {
+          <p class="text-sm text-ink-500">No recorded plot has a suitable land type.</p>
+        } @else {
+          <ul class="space-y-1.5 text-sm text-ink-700">
+            @for (plot of plots(); track plot.id) {
+              <li class="flex items-baseline justify-between gap-3">
+                <span>{{ plot.name }}</span>
+                <span class="tnum shrink-0 text-ink-500">{{ plot.area }} decimal</span>
+              </li>
+            }
+          </ul>
+        }
+        <p class="mt-4 text-xs text-ink-600">
+          Lane 1's suitability gate, read from the crop's side. An agreement naming this crop on any
+          other plot is refused.
+        </p>
+      </ui-section-card>
+
+      @if (blocker(); as reason) {
+        <ui-section-card heading="Why this crop cannot be removed">
+          <p class="text-sm text-ink-600">{{ reason }}</p>
+        </ui-section-card>
+      }
+    </div>
+  </div>
+
+  @if (editingCrop()) {
+    <app-crop-form [editing]="row" (closed)="editingCrop.set(false)" />
+  }
+
+  @if (editingVariety()) {
+    <app-variety-form
+      [editing]="editingVarietyRow()"
+      [cropId]="row.id"
+      (closed)="editingVariety.set(null)"
+    />
+  }
+} @else {
+  <p class="py-16 text-center text-sm text-ink-500">Loading crop…</p>
+}

@@ -1,0 +1,134 @@
+<ui-page-header
+  eyebrow="Setup"
+  title="Crops & Varieties"
+  subtitle="What may be grown, on which land types, and what each variety is expected to give."
+>
+  <button
+    type="button"
+    (click)="addingVariety.set(true)"
+    class="inline-flex items-center justify-center gap-1.5 rounded-md border border-ink-200 px-3 py-2 text-sm font-medium text-ink-700 hover:border-brand-400 hover:text-brand-700"
+  >
+    <ui-icon name="leaf" [size]="15" />
+    New variety
+  </button>
+  <button
+    type="button"
+    (click)="editing.set('new')"
+    class="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700"
+  >
+    <ui-icon name="edit" [size]="15" />
+    New crop
+  </button>
+</ui-page-header>
+
+@if (error(); as message) {
+  <ui-alert tone="bad" [message]="message" (dismissed)="clearError()" />
+}
+
+@if (blocked(); as message) {
+  <ui-alert tone="warn" [message]="message" (dismissed)="blocked.set('')" />
+}
+
+@if (undoable(); as removed) {
+  <div
+    role="status"
+    class="mb-4 flex flex-col gap-2 rounded-md border border-ink-200 bg-ink-50 px-3 py-2 text-sm text-ink-700 sm:flex-row sm:items-center"
+  >
+    <span class="min-w-0 flex-1">{{ removed.name }} removed.</span>
+    <button
+      type="button"
+      (click)="undoRemove()"
+      class="shrink-0 rounded-md border border-ink-300 px-2.5 py-1 text-sm font-medium text-ink-900 hover:bg-white"
+    >
+      Undo
+    </button>
+  </div>
+}
+
+<div class="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+  <ui-kpi-tile label="Crops" [value]="rows().length" hint="Recorded and selectable" />
+  <ui-kpi-tile label="Varieties" [value]="varietyCount()" hint="Across every crop" />
+  <ui-kpi-tile
+    label="Without a variety"
+    [value]="unusable()"
+    [tone]="unusable() ? 'warn' : 'ok'"
+    hint="Cannot be used in an agreement yet"
+  />
+</div>
+
+<div class="relative overflow-x-auto rounded-lg border border-ink-200 bg-white">
+  <table class="w-full border-collapse text-sm">
+    <caption class="sr-only">
+      Crops, the land types each suits, and how many varieties it carries
+    </caption>
+    <thead>
+      <tr class="border-b border-ink-200 bg-ink-50 text-left">
+        <th scope="col" class="px-4 py-2 font-medium text-ink-600">Crop</th>
+        <th scope="col" class="px-4 py-2 font-medium text-ink-600">Suits</th>
+        <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">Plots</th>
+        <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">Varieties</th>
+        <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">
+          <span class="sr-only">Actions</span>
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (loading()) {
+        <tr>
+          <td colspan="5" class="px-4 py-8 text-center text-ink-500">Loading crops…</td>
+        </tr>
+      } @else {
+        @for (row of rows(); track row.id) {
+          <tr class="border-b border-ink-100 last:border-0">
+            <td class="px-4 py-2">
+              <a
+                [routerLink]="['/crops', row.id]"
+                class="font-medium text-brand-700 hover:underline"
+              >
+                {{ row.name }}
+              </a>
+            </td>
+            <td class="px-4 py-2 text-ink-600">{{ typesOf(row) }}</td>
+            <td class="tnum px-4 py-2 text-right">{{ plotsFor(row) }}</td>
+            <td class="tnum px-4 py-2 text-right">{{ varietiesOf(row).length }}</td>
+            <td class="px-4 py-2">
+              <div class="flex justify-end gap-1">
+                <button
+                  type="button"
+                  (click)="edit(row)"
+                  class="rounded-md border border-ink-200 px-2.5 py-1 text-xs font-medium text-ink-700 hover:border-brand-400 hover:text-brand-700"
+                  [attr.aria-label]="'Edit ' + row.name"
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  (click)="remove(row)"
+                  class="rounded-md border border-ink-200 px-2.5 py-1 text-xs font-medium text-bad-700 hover:border-bad-600 hover:bg-bad-100"
+                  [attr.aria-label]="'Remove ' + row.name"
+                  [title]="blockerFor(row) || 'Remove this crop'"
+                >
+                  Remove
+                </button>
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="5" class="px-4 py-8 text-center text-ink-500">
+              No crops yet. Record one before drafting an agreement.
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>
+
+@if (editing()) {
+  <app-crop-form [editing]="editingCrop()" (closed)="editing.set(null)" />
+}
+
+@if (addingVariety()) {
+  <app-variety-form (closed)="addingVariety.set(false)" />
+}

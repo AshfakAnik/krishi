@@ -1,0 +1,136 @@
+<ui-page-header
+  eyebrow="Cultivation"
+  title="Farming Calendar"
+  subtitle="The lifecycle template, expanded into dated tasks for every live cycle."
+>
+  <button
+    type="button"
+    (click)="showClosed.set(!showClosed())"
+    class="inline-flex items-center justify-center gap-1.5 rounded-md border border-ink-200 px-3 py-2 text-sm font-medium text-ink-700 hover:border-brand-400 hover:text-brand-700"
+    [attr.aria-pressed]="showClosed()"
+  >
+    {{ showClosed() ? 'Hide closed' : 'Show closed' }}
+  </button>
+  <button
+    type="button"
+    (click)="formOpen.set(true)"
+    class="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700"
+  >
+    <ui-icon name="edit" [size]="15" />
+    Add task
+  </button>
+</ui-page-header>
+
+@if (error(); as message) {
+  <ui-alert tone="bad" [message]="message" (dismissed)="clearError()" />
+}
+
+<div class="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+  <ui-kpi-tile
+    label="Overdue"
+    [value]="overdue()"
+    [tone]="overdue() ? 'bad' : 'ok'"
+    hint="Past their due date and still open"
+  />
+  <ui-kpi-tile
+    label="Due within a week"
+    [value]="dueSoon()"
+    [tone]="dueSoon() ? 'warn' : 'neutral'"
+    hint="Coming up on a live cycle"
+  />
+  <ui-kpi-tile label="Open tasks" [value]="openCount()" hint="Across every live cycle" />
+</div>
+
+@if (loading()) {
+  <p class="py-16 text-center text-sm text-ink-500">Loading the calendar…</p>
+} @else if (!groups().length) {
+  <ui-empty-state
+    icon="calendar"
+    title="No live cycles"
+    hint="A calendar hangs off a cultivation cycle. Open one, or approve an agreement."
+  />
+} @else {
+  <div class="space-y-4">
+    @for (group of groups(); track group.cycle.id) {
+      <ui-section-card
+        [heading]="group.cycle.reference + ' · ' + landName(group.cycle)"
+        [note]="group.tasks.length + ' shown'"
+        [padded]="false"
+      >
+        @if (!hasAnyTask(group.cycle)) {
+          <div class="px-4 py-6 text-center">
+            <p class="text-sm text-ink-600">This cycle has no calendar yet.</p>
+            <button
+              type="button"
+              (click)="generateFor(group.cycle)"
+              [disabled]="saving()"
+              class="mt-3 inline-flex items-center justify-center gap-1.5 rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+            >
+              <ui-icon name="calendar" [size]="15" />
+              Lay out the season
+            </button>
+          </div>
+        } @else if (!group.tasks.length) {
+          <p class="px-4 py-6 text-center text-sm text-ink-500">
+            Everything on this cycle is closed. Use “Show closed” to read it back.
+          </p>
+        } @else {
+          <ul class="divide-y divide-ink-100">
+            @for (task of group.tasks; track task.id) {
+              <li class="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:gap-4">
+                <span class="min-w-0 flex-1">
+                  <span class="block text-sm font-medium text-ink-900">{{ task.name }}</span>
+                  <span class="block text-xs text-ink-500">
+                    {{ stageLabels[task.stage] }} · due {{ due(task) }}
+                    @if (task.note) {
+                      · {{ task.note }}
+                    }
+                  </span>
+                </span>
+
+                <ui-status-badge [label]="standingLabel(task)" [tone]="standingTone(task)" />
+
+                <span class="flex shrink-0 gap-1">
+                  @if (openTask(task)) {
+                    <button
+                      type="button"
+                      (click)="markDone(task)"
+                      [disabled]="saving()"
+                      class="rounded-md border border-ink-200 px-2.5 py-1 text-xs font-medium text-ink-700 hover:border-ok-600 hover:text-ok-700 disabled:opacity-60"
+                      [attr.aria-label]="'Mark ' + task.name + ' done'"
+                    >
+                      Done
+                    </button>
+                    <button
+                      type="button"
+                      (click)="markSkipped(task)"
+                      [disabled]="saving()"
+                      class="rounded-md border border-ink-200 px-2.5 py-1 text-xs font-medium text-ink-700 hover:border-ink-400 disabled:opacity-60"
+                      [attr.aria-label]="'Skip ' + task.name"
+                    >
+                      Skip
+                    </button>
+                  } @else {
+                    <button
+                      type="button"
+                      (click)="reopenTask(task)"
+                      [disabled]="saving()"
+                      class="rounded-md border border-ink-200 px-2.5 py-1 text-xs font-medium text-ink-700 hover:border-brand-400 hover:text-brand-700 disabled:opacity-60"
+                      [attr.aria-label]="'Reopen ' + task.name"
+                    >
+                      Reopen
+                    </button>
+                  }
+                </span>
+              </li>
+            }
+          </ul>
+        }
+      </ui-section-card>
+    }
+  </div>
+}
+
+@if (formOpen()) {
+  <app-task-form (closed)="formOpen.set(false)" />
+}

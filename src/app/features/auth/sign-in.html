@@ -1,0 +1,73 @@
+<!-- `main`, not a bare div: this route renders outside the app shell, so it has
+     no landmark of its own and every one of its controls sits outside any
+     region. The shell supplies one for every other page. -->
+<main class="flex min-h-screen items-center justify-center px-4 py-10">
+  <div class="w-full max-w-sm">
+    <div class="mb-6 flex items-center gap-2.5">
+      <span class="text-brand-600"><ui-icon name="leaf" [size]="26" /></span>
+      <div>
+        <h1 class="text-xl font-semibold text-ink-900">Krishi</h1>
+        <p class="text-sm text-ink-500">Smart Farming & Sharecropping Management</p>
+      </div>
+    </div>
+
+    <div class="rounded-lg border border-ink-200 bg-white">
+      <div class="border-b border-ink-100 px-4 py-3">
+        <h2 class="text-sm font-semibold text-ink-800">Sign in</h2>
+        <p class="mt-0.5 text-xs text-ink-500">Your role decides what the app lets you do.</p>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="submit()" class="p-4">
+        <ui-form-field label="Username" for="si-username" [error]="errorFor('username')">
+          <input
+            id="si-username"
+            type="text"
+            formControlName="username"
+            autocomplete="username"
+            placeholder="e.g. rahim.owner"
+            class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+          />
+        </ui-form-field>
+
+        <ui-form-field label="Password" for="si-password" [error]="errorFor('password')">
+          <input
+            id="si-password"
+            [type]="showPassword() ? 'text' : 'password'"
+            formControlName="password"
+            autocomplete="current-password"
+            placeholder="At least 8 characters"
+            class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+          />
+        </ui-form-field>
+
+        <div class="mb-2 flex items-center gap-2">
+          <input
+            id="si-show-password"
+            type="checkbox"
+            [checked]="showPassword()"
+            (change)="showPassword.set(!showPassword())"
+            class="rounded border-ink-300 text-brand-600 focus:ring-brand-500"
+          />
+          <label for="si-show-password" class="text-sm text-ink-700">Show password</label>
+        </div>
+
+        @if (error(); as message) {
+          <ui-alert tone="bad" [message]="message" [dismissible]="false" />
+        }
+
+        <button
+          type="submit"
+          [disabled]="submitting()"
+          class="mt-2 w-full rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+        >
+          {{ submitting() ? 'Signing in…' : 'Sign in' }}
+        </button>
+
+        <div class="mt-3 flex items-center justify-between text-sm">
+          <a routerLink="/sign-up" class="font-medium text-brand-600 hover:text-brand-700">Create an account</a>
+          <a routerLink="/forgot-password" class="text-ink-500 hover:text-ink-700">Forgot password?</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</main>

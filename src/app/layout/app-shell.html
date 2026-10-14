@@ -1,0 +1,75 @@
+<div class="min-h-screen md:flex">
+  <!-- Persistent sidebar from md up. -->
+  <aside
+    class="hidden w-64 shrink-0 border-r border-ink-200 bg-white md:sticky md:top-0 md:block md:h-screen md:overflow-y-auto"
+  >
+    <div class="flex items-center gap-2 border-b border-ink-100 px-4 py-3">
+      <span class="text-brand-600"><ui-icon name="leaf" [size]="20" /></span>
+      <div class="min-w-0">
+        <p class="truncate text-sm font-semibold text-ink-900">Krishi</p>
+        <p class="truncate text-xs text-ink-500">Smart Farming & Sharecropping</p>
+      </div>
+    </div>
+    <app-sidebar-nav />
+  </aside>
+
+  <!-- Off-canvas drawer below md. -->
+  @if (drawerOpen()) {
+    <div class="fixed inset-0 z-40 md:hidden">
+      <div class="absolute inset-0 bg-ink-950/50" (click)="closeDrawer()" aria-hidden="true"></div>
+      <aside class="relative h-full w-72 overflow-y-auto bg-white shadow-xl">
+        <div class="flex items-center justify-between border-b border-ink-100 px-4 py-3">
+          <div class="flex items-center gap-2">
+            <span class="text-brand-600"><ui-icon name="leaf" [size]="20" /></span>
+            <p class="text-sm font-semibold text-ink-900">Krishi</p>
+          </div>
+          <button
+            type="button"
+            (click)="closeDrawer()"
+            class="rounded p-1 text-ink-500 hover:text-ink-900"
+            aria-label="Close navigation"
+          >
+            <ui-icon name="close" [size]="18" />
+          </button>
+        </div>
+        <app-sidebar-nav (navigated)="closeDrawer()" />
+      </aside>
+    </div>
+  }
+
+  <div class="flex min-w-0 flex-1 flex-col">
+    <header
+      class="sticky top-0 z-30 flex items-center gap-3 border-b border-ink-200 bg-white px-4 py-2.5"
+    >
+      <button
+        type="button"
+        (click)="toggleDrawer()"
+        class="rounded p-1 text-ink-600 hover:text-ink-900 md:hidden"
+        aria-label="Open navigation"
+      >
+        <ui-icon name="menu" [size]="18" />
+      </button>
+
+      <p class="min-w-0 flex-1 truncate text-sm font-medium text-ink-700 md:hidden">Krishi</p>
+
+      <div class="ml-auto flex items-center gap-3">
+        <div class="text-right leading-tight">
+          <p class="text-sm font-medium text-ink-900">{{ session.actorName() }}</p>
+          <p class="text-xs text-ink-500">{{ session.roleLabel() }}</p>
+        </div>
+        <button
+          type="button"
+          (click)="signOut()"
+          class="inline-flex items-center gap-1.5 rounded-md border border-ink-200 px-2.5 py-1.5 text-sm text-ink-700 hover:border-brand-400 hover:text-brand-700"
+        >
+          <ui-icon name="exit" [size]="15" />
+          Sign out
+        </button>
+      </div>
+    </header>
+
+    <main class="min-w-0 flex-1 px-4 py-6 sm:px-6">
+      <router-outlet />
+    </main>
+  </div>
+</div>

@@ -1,0 +1,132 @@
+<ui-page-header
+  eyebrow="Setup"
+  title="Seasons"
+  subtitle="The windows a cultivation cycle must start inside. Seasons may not overlap."
+>
+  <button
+    type="button"
+    (click)="editing.set('new')"
+    class="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700"
+  >
+    <ui-icon name="edit" [size]="15" />
+    New season
+  </button>
+</ui-page-header>
+
+@if (error(); as message) {
+  <ui-alert tone="bad" [message]="message" (dismissed)="clearError()" />
+}
+
+@if (blocked(); as message) {
+  <ui-alert tone="warn" [message]="message" (dismissed)="blocked.set('')" />
+}
+
+@if (undoable(); as removed) {
+  <div
+    role="status"
+    class="mb-4 flex flex-col gap-2 rounded-md border border-ink-200 bg-ink-50 px-3 py-2 text-sm text-ink-700 sm:flex-row sm:items-center"
+  >
+    <span class="min-w-0 flex-1">{{ removed.name }} removed.</span>
+    <button
+      type="button"
+      (click)="undoRemove()"
+      class="shrink-0 rounded-md border border-ink-300 px-2.5 py-1 text-sm font-medium text-ink-900 hover:bg-white"
+    >
+      Undo
+    </button>
+  </div>
+}
+
+<div class="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+  <ui-kpi-tile
+    label="Open now"
+    [value]="openCount()"
+    tone="ok"
+    hint="Today falls inside the window"
+  />
+  <ui-kpi-tile label="Upcoming" [value]="upcomingCount()" hint="Opens later" />
+  <ui-kpi-tile
+    label="Accepting records"
+    [value]="acceptingCount()"
+    hint="New agreements and cycles allowed"
+  />
+</div>
+
+<!-- A plain table rather than ui-data-table: this list needs a per-row action
+     column, which the shared table has no slot for, and reference lists are
+     short enough that search and sort would be furniture. -->
+<div class="relative overflow-x-auto rounded-lg border border-ink-200 bg-white">
+  <table class="w-full border-collapse text-sm">
+    <caption class="sr-only">
+      Seasons, with the standing of each read from today's date
+    </caption>
+    <thead>
+      <tr class="border-b border-ink-200 bg-ink-50 text-left">
+        <th scope="col" class="px-4 py-2 font-medium text-ink-600">Season</th>
+        <th scope="col" class="px-4 py-2 font-medium text-ink-600">Year</th>
+        <th scope="col" class="px-4 py-2 font-medium text-ink-600">Opens</th>
+        <th scope="col" class="px-4 py-2 font-medium text-ink-600">Closes</th>
+        <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">Days</th>
+        <th scope="col" class="px-4 py-2 font-medium text-ink-600">Standing</th>
+        <th scope="col" class="px-4 py-2 font-medium text-ink-600">Accepting</th>
+        <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">
+          <span class="sr-only">Actions</span>
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (loading()) {
+        <tr>
+          <td colspan="8" class="px-4 py-8 text-center text-ink-500">Loading seasons…</td>
+        </tr>
+      } @else {
+        @for (row of rows(); track row.id) {
+          <tr class="border-b border-ink-100 last:border-0">
+            <td class="px-4 py-2 font-medium text-ink-900">{{ row.name }}</td>
+            <td class="tnum px-4 py-2">{{ row.year }}</td>
+            <td class="tnum px-4 py-2">{{ date(row.startsOn) }}</td>
+            <td class="tnum px-4 py-2">{{ date(row.endsOn) }}</td>
+            <td class="tnum px-4 py-2 text-right">{{ lengthOf(row) }}</td>
+            <td class="px-4 py-2">
+              <ui-status-badge [label]="standingLabel(row)" [tone]="standingTone(row)" />
+            </td>
+            <td class="px-4 py-2 text-ink-600">
+              {{ row.active ? 'Yes' : 'Closed to new records' }}
+            </td>
+            <td class="px-4 py-2">
+              <div class="flex justify-end gap-1">
+                <button
+                  type="button"
+                  (click)="edit(row)"
+                  class="rounded-md border border-ink-200 px-2.5 py-1 text-xs font-medium text-ink-700 hover:border-brand-400 hover:text-brand-700"
+                  [attr.aria-label]="'Edit ' + row.name"
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  (click)="remove(row)"
+                  class="rounded-md border border-ink-200 px-2.5 py-1 text-xs font-medium text-bad-700 hover:border-bad-600 hover:bg-bad-100"
+                  [attr.aria-label]="'Remove ' + row.name"
+                  [title]="blockerFor(row) || 'Remove this season'"
+                >
+                  Remove
+                </button>
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="8" class="px-4 py-8 text-center text-ink-500">
+              No seasons yet. Create one to open a cultivation window.
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>
+
+@if (editing()) {
+  <app-season-form [editing]="editingSeason()" (closed)="editing.set(null)" />
+}

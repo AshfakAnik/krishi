@@ -1,0 +1,125 @@
+<ui-page-header
+  eyebrow="Settlement & Finance"
+  title="Finance"
+  subtitle="Receivables, payables, payments and produce transfers — kept apart from the settlement that raised them."
+>
+  <button
+    type="button"
+    (click)="formOpen.set(true)"
+    class="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700"
+  >
+    <ui-icon name="coins" [size]="15" />
+    Add entry
+  </button>
+</ui-page-header>
+
+@if (error(); as message) {
+  <ui-alert tone="bad" [message]="message" (dismissed)="clearError()" />
+}
+
+<div class="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+  <ui-kpi-tile label="Open lines" [value]="openCount()" hint="Not yet settled" />
+  <ui-kpi-tile
+    label="Receivable"
+    [value]="taka(balances().receivable)"
+    tone="ok"
+    hint="Owed to the business"
+  />
+  <ui-kpi-tile
+    label="Payable"
+    [value]="taka(balances().payable)"
+    tone="warn"
+    hint="Owed by the business"
+  />
+  <ui-kpi-tile
+    label="Net position"
+    [value]="taka(balances().net)"
+    [tone]="balances().net < 0 ? 'bad' : 'ok'"
+    hint="Receivable less payable"
+  />
+</div>
+
+<div class="relative overflow-x-auto rounded-lg border border-ink-200 bg-white">
+  <table class="w-full border-collapse text-sm">
+    <caption class="sr-only">
+      Ledger entries, with what is still outstanding
+    </caption>
+    <thead>
+      <tr class="border-b border-ink-200 bg-ink-50 text-left">
+        <th scope="col" class="px-4 py-2 font-medium text-ink-600">Reference</th>
+        <th scope="col" class="px-4 py-2 font-medium text-ink-600">Kind</th>
+        <th scope="col" class="px-4 py-2 font-medium text-ink-600">Party</th>
+        <th scope="col" class="px-4 py-2 font-medium text-ink-600">Settlement</th>
+        <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">Value</th>
+        <th scope="col" class="px-4 py-2 font-medium text-ink-600">Raised</th>
+        <th scope="col" class="px-4 py-2 font-medium text-ink-600">Status</th>
+        <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">
+          <span class="sr-only">Actions</span>
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (loading()) {
+        <tr>
+          <td colspan="8" class="px-4 py-8 text-center text-ink-500">Loading the ledger…</td>
+        </tr>
+      } @else {
+        @for (row of rows(); track row.id) {
+          <tr class="border-b border-ink-100 last:border-0">
+            <td class="tnum px-4 py-2 font-medium text-ink-900">{{ row.reference }}</td>
+            <td class="px-4 py-2">
+              <ui-status-badge [label]="kindLabels[row.kind]" [tone]="kindTone(row)" />
+            </td>
+            <td class="px-4 py-2 text-ink-700">{{ partyName(row.partyId) }}</td>
+            <td class="tnum px-4 py-2 text-ink-600">{{ settlementRef(row) }}</td>
+            <td class="tnum px-4 py-2 text-right font-medium text-ink-900">{{ valueOf(row) }}</td>
+            <td class="tnum px-4 py-2 text-ink-600">{{ date(row.raisedOn) }}</td>
+            <td class="px-4 py-2 text-ink-600">
+              {{ statusLabels[row.status] }}
+              @if (row.settledOn) {
+                <span class="block text-xs text-ink-500">{{ date(row.settledOn) }}</span>
+              }
+            </td>
+            <td class="px-4 py-2">
+              @if (mayDecide()) {
+                <div class="flex justify-end">
+                  @if (row.status === 'open') {
+                    <button
+                      type="button"
+                      (click)="markSettled(row)"
+                      [disabled]="saving()"
+                      class="rounded-md border border-ink-200 px-2.5 py-1 text-xs font-medium text-ink-700 hover:border-ok-600 hover:text-ok-700 disabled:opacity-60"
+                      [attr.aria-label]="'Mark ' + row.reference + ' settled'"
+                    >
+                      Mark settled
+                    </button>
+                  } @else {
+                    <button
+                      type="button"
+                      (click)="reopenEntry(row)"
+                      [disabled]="saving()"
+                      class="rounded-md border border-ink-200 px-2.5 py-1 text-xs font-medium text-ink-700 hover:border-brand-400 hover:text-brand-700 disabled:opacity-60"
+                      [attr.aria-label]="'Reopen ' + row.reference"
+                    >
+                      Reopen
+                    </button>
+                  }
+                </div>
+              }
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="8" class="px-4 py-8 text-center text-ink-500">
+              Nothing on the ledger. Agreeing a settlement raises its lines automatically.
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>
+
+@if (formOpen()) {
+  <app-finance-form (closed)="formOpen.set(false)" />
+}

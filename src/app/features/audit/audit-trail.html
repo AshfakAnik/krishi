@@ -1,0 +1,14 @@
+<ui-page-header
+  eyebrow="Settlement & Finance"
+  title="Audit Trail"
+  subtitle="Every write in the app, newest first."
+/>
+
+<ui-data-table
+  [columns]="columns"
+  [rows]="rows()"
+  [loading]="loading()"
+  searchPlaceholder="Search by actor, module or action"
+  emptyTitle="Nothing recorded yet"
+  emptyHint="Submitting, approving or revoking an agreement writes a row here."
+/>

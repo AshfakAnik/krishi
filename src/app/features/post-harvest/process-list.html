@@ -1,0 +1,151 @@
+<ui-page-header
+  eyebrow="Harvest & Sales"
+  title="Post-Harvest"
+  subtitle="Drying, Pala stacking, threshing, machine processing and jute retting — and what each loses."
+>
+  <button
+    type="button"
+    (click)="formOpen.set(true)"
+    class="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700"
+  >
+    <ui-icon name="sliders" [size]="15" />
+    Open batch
+  </button>
+</ui-page-header>
+
+@if (error(); as message) {
+  <ui-alert tone="bad" [message]="message" (dismissed)="clearError()" />
+}
+
+@if (closeError(); as message) {
+  <ui-alert tone="warn" [message]="message" (dismissed)="closeError.set('')" />
+}
+
+<div class="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+  <ui-kpi-tile
+    label="In progress"
+    [value]="running().length"
+    [tone]="running().length ? 'warn' : 'ok'"
+    hint="Batches not yet closed"
+  />
+  <ui-kpi-tile label="Completed" [value]="completed().length" hint="Filed into store" />
+  <ui-kpi-tile
+    label="Lost in processing"
+    [value]="maund(totalWastage())"
+    hint="Moisture, chaff and spillage"
+  />
+</div>
+
+<div class="space-y-4">
+  <ui-section-card heading="In progress" [note]="running().length + ' open'" [padded]="false">
+    @if (loading()) {
+      <p class="px-4 py-6 text-center text-sm text-ink-500">Loading batches…</p>
+    } @else if (!running().length) {
+      <ui-empty-state
+        icon="check-shield"
+        title="Nothing in progress"
+        hint="Every batch has been closed and filed into store."
+      />
+    } @else {
+      <ul class="divide-y divide-ink-100">
+        @for (batch of running(); track batch.id) {
+          <li class="flex flex-col gap-3 px-4 py-3 lg:flex-row lg:items-end">
+            <span class="min-w-0 flex-1">
+              <span class="block text-sm font-medium text-ink-900">
+                {{ batch.reference }} · {{ processLabels[batch.process] }}
+              </span>
+              <span class="block text-xs text-ink-500">
+                {{ harvestRef(batch) }} · {{ maund(batch.inputQuantity) }} in · started
+                {{ date(batch.startedOn) }}
+                @if (batch.note) {
+                  · {{ batch.note }}
+                }
+              </span>
+            </span>
+
+            <span class="flex shrink-0 items-end gap-2">
+              <span class="flex flex-col">
+                <label [for]="'out-' + batch.id" class="mb-1 text-xs font-medium text-ink-700">
+                  Output (maund)
+                </label>
+                <input
+                  [id]="'out-' + batch.id"
+                  type="number"
+                  min="0"
+                  step="1"
+                  [value]="outputFor(batch)"
+                  (input)="onOutput(batch, $event)"
+                  class="tnum w-32 rounded-md border border-ink-200 px-2.5 py-1.5 text-sm focus:border-brand-500 focus:outline-none"
+                />
+              </span>
+              <button
+                type="button"
+                (click)="closeBatch(batch)"
+                [disabled]="saving()"
+                class="rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+              >
+                Close & store
+              </button>
+            </span>
+          </li>
+        }
+      </ul>
+    }
+  </ui-section-card>
+
+  <ui-section-card heading="Completed" [note]="completed().length + ' closed'" [padded]="false">
+    @if (!completed().length) {
+      <p class="px-4 py-6 text-center text-sm text-ink-500">Nothing closed yet.</p>
+    } @else {
+      <div class="relative overflow-x-auto">
+        <table class="w-full border-collapse text-sm">
+          <caption class="sr-only">
+            Completed processing batches and their wastage
+          </caption>
+          <thead>
+            <tr class="border-b border-ink-200 bg-ink-50 text-left">
+              <th scope="col" class="px-4 py-2 font-medium text-ink-600">Batch</th>
+              <th scope="col" class="px-4 py-2 font-medium text-ink-600">Process</th>
+              <th scope="col" class="px-4 py-2 font-medium text-ink-600">Harvest</th>
+              <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">In</th>
+              <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">Out</th>
+              <th scope="col" class="px-4 py-2 font-medium text-ink-600">Lost</th>
+              <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">
+                <span class="sr-only">Actions</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (batch of completed(); track batch.id) {
+              <tr class="border-b border-ink-100 last:border-0">
+                <td class="tnum px-4 py-2">{{ batch.reference }}</td>
+                <td class="px-4 py-2">{{ processLabels[batch.process] }}</td>
+                <td class="tnum px-4 py-2 text-ink-600">{{ harvestRef(batch) }}</td>
+                <td class="tnum px-4 py-2 text-right">{{ maund(batch.inputQuantity) }}</td>
+                <td class="tnum px-4 py-2 text-right">{{ maund(batch.outputQuantity) }}</td>
+                <td class="px-4 py-2">
+                  <ui-status-badge [label]="lost(batch)" [tone]="wastageTone(batch)" />
+                </td>
+                <td class="px-4 py-2 text-right">
+                  <button
+                    type="button"
+                    (click)="reopenBatch(batch)"
+                    [disabled]="saving()"
+                    class="rounded-md border border-ink-200 px-2.5 py-1 text-xs font-medium text-ink-700 hover:border-brand-400 hover:text-brand-700 disabled:opacity-60"
+                    [attr.aria-label]="'Reopen ' + batch.reference"
+                  >
+                    Reopen
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </ui-section-card>
+</div>
+
+@if (formOpen()) {
+  <app-process-form (closed)="formOpen.set(false)" />
+}

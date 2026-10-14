@@ -1,0 +1,104 @@
+<ui-page-header
+  eyebrow="Settlement & Finance"
+  title="Reports"
+  subtitle="Land-wise, sharecropper-wise, crop-wise and season-wise, with profit and loss."
+/>
+
+<div class="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+  <ui-kpi-tile
+    label="Net proceeds"
+    [value]="taka(totals().proceeds)"
+    hint="After haque and transport"
+  />
+  <ui-kpi-tile
+    label="Cultivation cost"
+    [value]="taka(totals().costs)"
+    hint="Including harvest labour"
+  />
+  <ui-kpi-tile
+    label="Margin"
+    [value]="taka(totals().margin)"
+    [tone]="totals().margin < 0 ? 'bad' : 'ok'"
+    hint="Proceeds less cost"
+  />
+  <ui-kpi-tile
+    label="Dadhon outstanding"
+    [value]="taka(outstandingDadhon())"
+    [tone]="outstandingDadhon() ? 'warn' : 'ok'"
+    hint="Still to recover at settlement"
+  />
+</div>
+
+@if (!hasAnything()) {
+  <ui-empty-state
+    icon="grid"
+    title="Nothing to report yet"
+    hint="Reports are derived from cycles, harvests, activities and sales. Record some and they fill in."
+  />
+} @else {
+  <div class="space-y-4">
+    @for (
+      report of [
+        { heading: 'Land-wise', rows: byLand(), first: 'Plot' },
+        { heading: 'Sharecropper-wise', rows: bySharecropper(), first: 'Sharecropper' },
+        { heading: 'Crop-wise', rows: byCrop(), first: 'Crop' },
+        { heading: 'Season-wise', rows: bySeason(), first: 'Season' },
+      ];
+      track report.heading
+    ) {
+      <ui-section-card
+        [heading]="report.heading"
+        [note]="report.rows.length + ' rows'"
+        [padded]="false"
+      >
+        <div class="relative overflow-x-auto">
+          <table class="w-full border-collapse text-sm">
+            <caption class="sr-only">
+              {{
+                report.heading
+              }}
+              summary of yield, proceeds, cost and margin
+            </caption>
+            <thead>
+              <tr class="border-b border-ink-200 bg-ink-50 text-left">
+                <th scope="col" class="px-4 py-2 font-medium text-ink-600">{{ report.first }}</th>
+                <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">Area</th>
+                <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">Expected</th>
+                <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">Harvested</th>
+                <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">Achieved</th>
+                <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">Proceeds</th>
+                <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">Cost</th>
+                <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">Margin</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of report.rows; track row.key) {
+                <tr class="border-b border-ink-100 last:border-0">
+                  <td class="px-4 py-2">
+                    <span class="font-medium text-ink-900">{{ row.label }}</span>
+                    @if (row.detail) {
+                      <span class="block text-xs text-ink-500">{{ row.detail }}</span>
+                    }
+                  </td>
+                  <td class="tnum px-4 py-2 text-right">{{ area(row.area) }}</td>
+                  <td class="tnum px-4 py-2 text-right">{{ maund(row.expected) }}</td>
+                  <td class="tnum px-4 py-2 text-right">{{ maund(row.harvested) }}</td>
+                  <td class="tnum px-4 py-2 text-right">{{ achieved(row) }}</td>
+                  <td class="tnum px-4 py-2 text-right">{{ taka(row.proceeds) }}</td>
+                  <td class="tnum px-4 py-2 text-right">{{ taka(row.costs) }}</td>
+                  <td
+                    class="tnum px-4 py-2 text-right font-medium"
+                    [class.text-bad-700]="row.margin < 0"
+                    [class.text-ink-900]="row.margin >= 0"
+                  >
+                    {{ taka(row.margin) }}
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </ui-section-card>
+    }
+  </div>
+}

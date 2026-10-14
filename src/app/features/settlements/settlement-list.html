@@ -1,0 +1,145 @@
+<ui-page-header
+  eyebrow="Settlement & Finance"
+  title="Settlements"
+  subtitle="Where the harvest, the costs, the agreed shares and the dadhon ledger finally meet."
+>
+  @if (session.canApproveAgreement()) {
+    <button
+      type="button"
+      (click)="formOpen.set(true)"
+      class="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700"
+    >
+      <ui-icon name="scale" [size]="15" />
+      Prepare settlement
+    </button>
+  }
+</ui-page-header>
+
+@if (error(); as message) {
+  <ui-alert tone="bad" [message]="message" (dismissed)="clearError()" />
+}
+
+<div class="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+  <ui-kpi-tile
+    label="In draft"
+    [value]="openCount()"
+    [tone]="openCount() ? 'warn' : 'ok'"
+    hint="Prepared, not yet agreed"
+  />
+  <ui-kpi-tile
+    label="Disputed"
+    [value]="disputedCount()"
+    [tone]="disputedCount() ? 'bad' : 'ok'"
+    hint="Sent back for recomputation"
+  />
+  <ui-kpi-tile
+    label="Dadhon recovered"
+    [value]="taka(dadhonRecovered())"
+    tone="ok"
+    hint="Taken out of settled shares"
+  />
+  <ui-kpi-tile
+    label="Paid to sharecroppers"
+    [value]="taka(paidOut())"
+    hint="After the advance came off"
+  />
+</div>
+
+<div class="relative overflow-x-auto rounded-lg border border-ink-200 bg-white">
+  <table class="w-full border-collapse text-sm">
+    <caption class="sr-only">
+      Settlements, with the division and what remains to decide
+    </caption>
+    <thead>
+      <tr class="border-b border-ink-200 bg-ink-50 text-left">
+        <th scope="col" class="px-4 py-2 font-medium text-ink-600">Reference</th>
+        <th scope="col" class="px-4 py-2 font-medium text-ink-600">Cycle</th>
+        <th scope="col" class="px-4 py-2 font-medium text-ink-600">Mode</th>
+        <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">Proceeds</th>
+        <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">Owner</th>
+        <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">Dadhon</th>
+        <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">To tenant</th>
+        <th scope="col" class="px-4 py-2 font-medium text-ink-600">Status</th>
+        <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">
+          <span class="sr-only">Actions</span>
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (loading()) {
+        <tr>
+          <td colspan="9" class="px-4 py-8 text-center text-ink-500">Loading settlements…</td>
+        </tr>
+      } @else {
+        @for (row of rows(); track row.id) {
+          <tr class="border-b border-ink-100 last:border-0">
+            <td class="tnum px-4 py-2 font-medium text-ink-900">
+              {{ row.reference }}
+              <span class="block text-xs font-normal text-ink-500">
+                {{ date(row.settledOn) }}
+              </span>
+            </td>
+            <td class="tnum px-4 py-2 text-ink-600">{{ cycleRef(row) }}</td>
+            <td class="px-4 py-2 text-ink-600">{{ modeLabels[row.mode] }}</td>
+            <td class="tnum px-4 py-2 text-right">{{ taka(row.grossProceeds) }}</td>
+            <td class="tnum px-4 py-2 text-right">{{ taka(row.ownerProceeds) }}</td>
+            <td class="tnum px-4 py-2 text-right text-bad-700">
+              @if (row.advanceDeducted) {
+                − {{ taka(row.advanceDeducted) }}
+              } @else {
+                —
+              }
+            </td>
+            <td class="tnum px-4 py-2 text-right font-medium text-ink-900">
+              {{ taka(row.netToSharecropper) }}
+            </td>
+            <td class="px-4 py-2">
+              <ui-status-badge [label]="statusLabels[row.status]" [tone]="statusTone(row)" />
+              @if (openDisputes(row)) {
+                <span class="mt-1 block text-xs text-bad-700">
+                  {{ openDisputes(row) }} open dispute
+                </span>
+              }
+            </td>
+            <td class="px-4 py-2">
+              <div class="flex justify-end gap-1">
+                @if (agreeable(row)) {
+                  <button
+                    type="button"
+                    (click)="agreeSettlement(row)"
+                    [disabled]="saving()"
+                    class="rounded-md bg-brand-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+                    [attr.aria-label]="'Agree ' + row.reference"
+                  >
+                    Agree
+                  </button>
+                }
+                @if (closeable(row)) {
+                  <button
+                    type="button"
+                    (click)="closeSettlement(row)"
+                    [disabled]="saving()"
+                    class="rounded-md border border-ink-200 px-2.5 py-1 text-xs font-medium text-ink-700 hover:border-ok-600 hover:text-ok-700 disabled:opacity-60"
+                    [attr.aria-label]="'Close ' + row.reference"
+                  >
+                    Close
+                  </button>
+                }
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="9" class="px-4 py-8 text-center text-ink-500">
+              Nothing settled yet. Prepare one against a cycle that has sold produce.
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>
+
+@if (formOpen()) {
+  <app-settlement-form (closed)="formOpen.set(false)" />
+}

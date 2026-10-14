@@ -1,0 +1,108 @@
+<ui-modal
+  heading="Record a harvest batch"
+  description="Lane 4 expects several cuts per cycle. The running total is shown against the expectation."
+  (dismiss)="closed.emit()"
+>
+  <form [formGroup]="form" (ngSubmit)="submit()" id="harvest-form">
+    <ui-form-field
+      label="Cycle"
+      for="h-cycleId"
+      [error]="errorFor('cycleId')"
+      hint="Only cycles far enough along to have produced something."
+    >
+      <select
+        id="h-cycleId"
+        formControlName="cycleId"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      >
+        <option value="">Select a cycle</option>
+        @for (cycle of availableCycles(); track cycle.id) {
+          <option [value]="cycle.id">{{ cycleLabel(cycle.id) }}</option>
+        }
+      </select>
+    </ui-form-field>
+
+    <ui-form-field label="Quantity (maund)" for="h-quantity" [error]="errorFor('quantity')">
+      <input
+        id="h-quantity"
+        type="number"
+        min="0"
+        step="1"
+        formControlName="quantity"
+        class="tnum w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      />
+    </ui-form-field>
+
+    <ui-form-field label="Grade" for="h-grade" [error]="errorFor('grade')">
+      <select
+        id="h-grade"
+        formControlName="grade"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      >
+        @for (grade of grades; track grade) {
+          <option [value]="grade">{{ gradeLabels[grade] }}</option>
+        }
+      </select>
+    </ui-form-field>
+
+    <ui-form-field label="Labour cost (৳)" for="h-labour" [error]="errorFor('labourCost')">
+      <input
+        id="h-labour"
+        type="number"
+        min="0"
+        step="100"
+        formControlName="labourCost"
+        class="tnum w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      />
+    </ui-form-field>
+
+    <ui-form-field label="Cut on" for="h-harvestedOn" [error]="errorFor('harvestedOn')">
+      <input
+        id="h-harvestedOn"
+        type="date"
+        formControlName="harvestedOn"
+        class="tnum w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      />
+    </ui-form-field>
+
+    <ui-form-field label="Note" for="h-note" [error]="errorFor('note')">
+      <input
+        id="h-note"
+        type="text"
+        formControlName="note"
+        placeholder="First cut, the higher half of the plot."
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      />
+    </ui-form-field>
+
+    @if (progress(); as summary) {
+      <p class="mt-2 rounded-md bg-ink-50 px-3 py-2 text-xs text-ink-600">{{ summary }}</p>
+    }
+
+    @if (attempted() && hasErrors()) {
+      <ui-alert
+        tone="warn"
+        message="Some details still need fixing — see the fields marked above."
+        [dismissible]="false"
+      />
+    }
+  </form>
+
+  <ng-container modalActions>
+    <button
+      type="button"
+      (click)="closed.emit()"
+      class="rounded-md border border-ink-200 px-3 py-2 text-sm text-ink-700 hover:border-ink-300"
+    >
+      Cancel
+    </button>
+    <button
+      type="submit"
+      form="harvest-form"
+      [disabled]="saving()"
+      class="rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+    >
+      {{ saving() ? 'Recording…' : 'Record harvest' }}
+    </button>
+  </ng-container>
+</ui-modal>

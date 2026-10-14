@@ -1,0 +1,106 @@
+<ui-modal
+  heading="Request a mid-season advance"
+  description="Submitted for approval. No money moves until an administrator releases it."
+  (dismiss)="closed.emit()"
+>
+  <form [formGroup]="form" (ngSubmit)="submit()" id="advance-form">
+    <ui-form-field
+      label="Agreement"
+      for="agreementId"
+      [error]="errorFor('agreementId')"
+      hint="Only active agreements are listed — a draw needs a season to settle against."
+    >
+      <select
+        id="agreementId"
+        formControlName="agreementId"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      >
+        <option value="">Select an agreement</option>
+        @for (agreement of availableAgreements(); track agreement.id) {
+          <option [value]="agreement.id">{{ agreementLabel(agreement.id) }}</option>
+        }
+      </select>
+    </ui-form-field>
+
+    <ui-form-field
+      label="Amount (৳)"
+      for="amount"
+      [error]="errorFor('amount')"
+      [hint]="amountHint()"
+    >
+      <input
+        id="amount"
+        type="number"
+        min="0"
+        step="100"
+        formControlName="amount"
+        class="tnum w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      />
+    </ui-form-field>
+
+    <ui-form-field
+      label="Handed over on"
+      for="issuedOn"
+      [error]="errorFor('issuedOn')"
+      hint="Must fall inside the agreement's season."
+    >
+      <input
+        id="issuedOn"
+        type="date"
+        formControlName="issuedOn"
+        class="tnum w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      />
+    </ui-form-field>
+
+    <ui-form-field
+      label="What it is for"
+      for="note"
+      [error]="errorFor('note')"
+      hint="Recorded on the ledger row and in the audit trail."
+    >
+      <textarea
+        id="note"
+        rows="2"
+        formControlName="note"
+        placeholder="Urea top-dressing before the second irrigation."
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      ></textarea>
+    </ui-form-field>
+
+    <!-- The consequence, shown live rather than discovered on submit. -->
+    @if (selectedAgreement()) {
+      <div class="mt-2 rounded-md bg-ink-50 px-3 py-2 text-xs text-ink-600">
+        <p class="tnum">
+          Ceiling {{ taka(ceiling()) }} · available now {{ taka(available()) }} · left after this
+          request <span class="font-medium text-ink-900">{{ taka(remainingAfter()) }}</span>
+        </p>
+      </div>
+    }
+
+    @if (attempted() && hasErrors()) {
+      <ui-alert
+        tone="warn"
+        message="Some details still need fixing — see the fields marked above."
+        [dismissible]="false"
+      />
+    }
+  </form>
+
+  <ng-container modalActions>
+    <button
+      type="button"
+      (click)="closed.emit()"
+      class="rounded-md border border-ink-200 px-3 py-2 text-sm text-ink-700 hover:border-ink-300"
+    >
+      Cancel
+    </button>
+    <button
+      type="submit"
+      form="advance-form"
+      [disabled]="saving()"
+      class="rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+    >
+      {{ saving() ? 'Submitting…' : 'Submit for approval' }}
+    </button>
+  </ng-container>
+</ui-modal>

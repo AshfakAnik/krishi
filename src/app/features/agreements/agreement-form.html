@@ -1,0 +1,259 @@
+<ui-modal
+  heading="New sharecropping agreement"
+  description="Submitted for approval. Nothing is committed until an administrator activates it."
+  (dismiss)="closed.emit()"
+>
+  <form [formGroup]="form" (ngSubmit)="submit()" id="agreement-form">
+    <ui-form-field label="Season" for="seasonId" [error]="errorFor('seasonId')">
+      <select
+        id="seasonId"
+        formControlName="seasonId"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      >
+        <option value="">Select a season</option>
+        @for (season of seasons(); track season.id) {
+          <option [value]="season.id">{{ season.name }}</option>
+        }
+      </select>
+    </ui-form-field>
+
+    <ui-form-field
+      label="Land"
+      for="landId"
+      [error]="errorFor('landId')"
+      hint="Plots already committed for the chosen season are not listed."
+    >
+      <select
+        id="landId"
+        formControlName="landId"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      >
+        <option value="">Select a plot</option>
+        @for (land of availableLands(); track land.id) {
+          <option [value]="land.id">
+            {{ land.name }} · {{ land.code }} · {{ land.landType === 'dhani' ? 'Dhani' : 'Vita' }}
+          </option>
+        }
+      </select>
+    </ui-form-field>
+
+    <ui-form-field label="Crop" for="cropId" [error]="errorFor('cropId')">
+      <select
+        id="cropId"
+        formControlName="cropId"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      >
+        <option value="">Select a crop</option>
+        @for (crop of crops(); track crop.id) {
+          <option [value]="crop.id">{{ crop.name }}</option>
+        }
+      </select>
+    </ui-form-field>
+
+    <ui-form-field label="Variety" for="varietyId" [error]="errorFor('varietyId')">
+      <select
+        id="varietyId"
+        formControlName="varietyId"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      >
+        <option value="">Select a variety</option>
+        @for (variety of availableVarieties(); track variety.id) {
+          <option [value]="variety.id">{{ variety.name }} · {{ variety.durationDays }} days</option>
+        }
+      </select>
+    </ui-form-field>
+
+    <ui-form-field label="Sharecropper" for="sharecropperId" [error]="errorFor('sharecropperId')">
+      <select
+        id="sharecropperId"
+        formControlName="sharecropperId"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      >
+        <option value="">Select a sharecropper</option>
+        @for (person of sharecroppers(); track person.id) {
+          <option [value]="person.id">{{ person.name }} · {{ person.village }}</option>
+        }
+      </select>
+    </ui-form-field>
+
+    <ui-form-field label="Cultivation starts on" for="startsOn" [error]="errorFor('startsOn')">
+      <input
+        id="startsOn"
+        type="date"
+        formControlName="startsOn"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      />
+    </ui-form-field>
+
+    <ui-form-field label="Sharecropping model" for="model">
+      <select
+        id="model"
+        formControlName="model"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      >
+        @for (option of modelOptions; track option) {
+          <option [value]="option">{{ modelLabels[option] }}</option>
+        }
+      </select>
+    </ui-form-field>
+
+    @if (isTevaga()) {
+      <ui-form-field
+        label="Owner takes 1 share of"
+        for="tevagaTotalShares"
+        [error]="errorFor('tevagaTotalShares')"
+        hint="Local practice is one share of three. The sharecropper bears the whole cultivation cost."
+      >
+        <input
+          id="tevagaTotalShares"
+          type="number"
+          min="2"
+          max="5"
+          formControlName="tevagaTotalShares"
+          class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+        />
+      </ui-form-field>
+    } @else {
+      <ui-form-field
+        label="Owner's harvest share (%)"
+        for="ownerHarvestShare"
+        [error]="errorFor('ownerHarvestShare')"
+        hint="The sharecropper takes the remainder."
+      >
+        <input
+          id="ownerHarvestShare"
+          type="number"
+          min="0"
+          max="100"
+          formControlName="ownerHarvestShare"
+          class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+        />
+      </ui-form-field>
+
+      <div class="grid gap-x-4 sm:grid-cols-2">
+        <ui-form-field
+          label="Cost"
+          for="costResponsibility"
+          [error]="errorFor('costResponsibility')"
+          optional
+        >
+          <select
+            id="costResponsibility"
+            formControlName="costResponsibility"
+            class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+          >
+            @for (option of responsibilityOptions; track option) {
+              <option [value]="option">{{ responsibilityLabels[option] }}</option>
+            }
+          </select>
+        </ui-form-field>
+
+        <ui-form-field label="Labour" for="labourResponsibility" optional>
+          <select
+            id="labourResponsibility"
+            formControlName="labourResponsibility"
+            class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+          >
+            @for (option of responsibilityOptions; track option) {
+              <option [value]="option">{{ responsibilityLabels[option] }}</option>
+            }
+          </select>
+        </ui-form-field>
+
+        <ui-form-field label="Machinery" for="machineryResponsibility" optional>
+          <select
+            id="machineryResponsibility"
+            formControlName="machineryResponsibility"
+            class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+          >
+            @for (option of responsibilityOptions; track option) {
+              <option [value]="option">{{ responsibilityLabels[option] }}</option>
+            }
+          </select>
+        </ui-form-field>
+
+        <ui-form-field label="Inputs" for="inputResponsibility" optional>
+          <select
+            id="inputResponsibility"
+            formControlName="inputResponsibility"
+            class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+          >
+            @for (option of responsibilityOptions; track option) {
+              <option [value]="option">{{ responsibilityLabels[option] }}</option>
+            }
+          </select>
+        </ui-form-field>
+      </div>
+
+      <label class="mb-4 flex items-center gap-2 text-sm text-ink-700">
+        <input type="checkbox" formControlName="deductSaleExpenses" class="h-4 w-4 rounded" />
+        Deduct selling expenses (market haque, transport) before sharing
+      </label>
+    }
+
+    <ui-form-field label="Owner settles in" for="settlementMode" optional>
+      <select
+        id="settlementMode"
+        formControlName="settlementMode"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      >
+        @for (option of modeOptions; track option) {
+          <option [value]="option">{{ modeLabels[option] }}</option>
+        }
+      </select>
+    </ui-form-field>
+
+    <ui-form-field
+      label="Advance at signing (dadhon)"
+      for="advanceAmount"
+      [error]="errorFor('advanceAmount')"
+      [hint]="advanceHint()"
+      optional
+    >
+      <input
+        id="advanceAmount"
+        type="number"
+        min="0"
+        step="500"
+        formControlName="advanceAmount"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      />
+    </ui-form-field>
+
+    <!-- The consequence, live, before anything is submitted. -->
+    @if (yieldMaund()) {
+      <div class="rounded-md bg-ink-50 px-3 py-2.5 text-sm text-ink-700">
+        Expected harvest <span class="tnum font-medium">{{ maund(yieldMaund()) }}</span> — owner
+        <span class="tnum font-medium">{{ maund(split().owner) }}</span
+        >, sharecropper <span class="tnum font-medium">{{ maund(split().sharecropper) }}</span
+        >.
+      </div>
+    }
+
+    @if (attempted() && hasErrors()) {
+      <ui-alert
+        tone="warn"
+        message="Some terms still need fixing — see the fields marked above."
+        [dismissible]="false"
+      />
+    }
+  </form>
+
+  <ng-container modalActions>
+    <button
+      type="button"
+      (click)="closed.emit()"
+      class="rounded-md border border-ink-200 px-3 py-2 text-sm text-ink-700 hover:border-ink-300"
+    >
+      Cancel
+    </button>
+    <button
+      type="submit"
+      form="agreement-form"
+      [disabled]="saving()"
+      class="rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+    >
+      {{ saving() ? 'Submitting…' : 'Submit for approval' }}
+    </button>
+  </ng-container>
+</ui-modal>

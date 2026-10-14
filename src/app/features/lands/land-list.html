@@ -1,0 +1,133 @@
+<ui-page-header
+  eyebrow="Setup"
+  title="Lands"
+  subtitle="Dag-wise plots with area, land type and whichever agreement currently holds them."
+>
+  <button
+    type="button"
+    (click)="editing.set('new')"
+    class="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700"
+  >
+    <ui-icon name="edit" [size]="15" />
+    New plot
+  </button>
+</ui-page-header>
+
+@if (error(); as message) {
+  <ui-alert tone="bad" [message]="message" (dismissed)="clearError()" />
+}
+
+@if (blocked(); as message) {
+  <ui-alert tone="warn" [message]="message" (dismissed)="blocked.set('')" />
+}
+
+@if (undoable(); as removed) {
+  <div
+    role="status"
+    class="mb-4 flex flex-col gap-2 rounded-md border border-ink-200 bg-ink-50 px-3 py-2 text-sm text-ink-700 sm:flex-row sm:items-center"
+  >
+    <span class="min-w-0 flex-1">{{ removed.code }} · {{ removed.name }} removed.</span>
+    <button
+      type="button"
+      (click)="undoRemove()"
+      class="shrink-0 rounded-md border border-ink-300 px-2.5 py-1 text-sm font-medium text-ink-900 hover:bg-white"
+    >
+      Undo
+    </button>
+  </div>
+}
+
+<div class="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+  <ui-kpi-tile label="Plots" [value]="rows().length" hint="Recorded dag-wise" />
+  <ui-kpi-tile label="Total area" [value]="area(totalArea())" hint="Across every plot" />
+  <ui-kpi-tile
+    label="Committed"
+    [value]="heldCount()"
+    [tone]="heldCount() ? 'warn' : 'neutral'"
+    hint="Held by an agreement"
+  />
+  <ui-kpi-tile label="Free area" [value]="area(freeArea())" tone="ok" hint="Available to commit" />
+</div>
+
+<div class="relative overflow-x-auto rounded-lg border border-ink-200 bg-white">
+  <table class="w-full border-collapse text-sm">
+    <caption class="sr-only">
+      Plots, with area, land type, owner and current holder
+    </caption>
+    <thead>
+      <tr class="border-b border-ink-200 bg-ink-50 text-left">
+        <th scope="col" class="px-4 py-2 font-medium text-ink-600">Code</th>
+        <th scope="col" class="px-4 py-2 font-medium text-ink-600">Plot</th>
+        <th scope="col" class="px-4 py-2 font-medium text-ink-600">Type</th>
+        <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">Area</th>
+        <th scope="col" class="px-4 py-2 font-medium text-ink-600">Owner</th>
+        <th scope="col" class="px-4 py-2 font-medium text-ink-600">Held by</th>
+        <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">
+          <span class="sr-only">Actions</span>
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (loading()) {
+        <tr>
+          <td colspan="7" class="px-4 py-8 text-center text-ink-500">Loading plots…</td>
+        </tr>
+      } @else {
+        @for (row of rows(); track row.id) {
+          <tr class="border-b border-ink-100 last:border-0">
+            <td class="tnum px-4 py-2">
+              <a
+                [routerLink]="['/lands', row.id]"
+                class="font-medium text-brand-700 hover:underline"
+              >
+                {{ row.code }}
+              </a>
+            </td>
+            <td class="px-4 py-2 text-ink-900">{{ row.name }}</td>
+            <td class="px-4 py-2 text-ink-600">{{ typeLabel(row) }}</td>
+            <td class="tnum px-4 py-2 text-right">{{ area(row.area) }}</td>
+            <td class="px-4 py-2 text-ink-600">{{ ownerName(row) }}</td>
+            <td class="px-4 py-2">
+              @if (held(row)) {
+                <ui-status-badge [label]="holderOf(row)" tone="warn" />
+              } @else {
+                <ui-status-badge label="Free" tone="ok" />
+              }
+            </td>
+            <td class="px-4 py-2">
+              <div class="flex justify-end gap-1">
+                <button
+                  type="button"
+                  (click)="edit(row)"
+                  class="rounded-md border border-ink-200 px-2.5 py-1 text-xs font-medium text-ink-700 hover:border-brand-400 hover:text-brand-700"
+                  [attr.aria-label]="'Edit ' + row.name"
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  (click)="remove(row)"
+                  class="rounded-md border border-ink-200 px-2.5 py-1 text-xs font-medium text-bad-700 hover:border-bad-600 hover:bg-bad-100"
+                  [attr.aria-label]="'Remove ' + row.name"
+                  [title]="blockerFor(row) || 'Remove this plot'"
+                >
+                  Remove
+                </button>
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="7" class="px-4 py-8 text-center text-ink-500">
+              No plots yet. Record one before drafting an agreement.
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>
+
+@if (editing()) {
+  <app-land-form [editing]="editingLand()" (closed)="editing.set(null)" />
+}

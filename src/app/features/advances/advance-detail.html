@@ -1,0 +1,182 @@
+@if (entry(); as row) {
+  <ui-page-header
+    eyebrow="Advances & Loans"
+    [title]="row.reference"
+    [subtitle]="partyName(row.sharecropperId) + ' · ' + taka(row.amount)"
+    backLink="/advances"
+    backLabel="All advances"
+  >
+    <ui-status-badge [label]="statusLabel()" [tone]="statusTone()" />
+
+    @if (withdrawable()) {
+      <button
+        type="button"
+        (click)="withdraw()"
+        [disabled]="saving()"
+        class="inline-flex items-center justify-center gap-1.5 rounded-md border border-bad-600 px-3 py-2 text-sm font-medium text-bad-700 hover:bg-bad-100 disabled:opacity-60"
+      >
+        <ui-icon name="close" [size]="15" />
+        Withdraw request
+      </button>
+    }
+  </ui-page-header>
+
+  @if (error(); as message) {
+    <ui-alert tone="bad" [message]="message" (dismissed)="clearError()" />
+  }
+
+  @if (row.decisionNote) {
+    <ui-alert
+      tone="bad"
+      [message]="row.decidedBy + ': ' + row.decisionNote"
+      [dismissible]="false"
+    />
+  }
+
+  <div class="grid gap-4 lg:grid-cols-3">
+    <div class="space-y-4 lg:col-span-2">
+      <ui-section-card heading="Advance">
+        <ui-field-list [fields]="summary()" />
+      </ui-section-card>
+
+      <ui-section-card heading="What it is for">
+        <p class="text-sm text-ink-700">{{ purpose() }}</p>
+      </ui-section-card>
+
+      <ui-section-card heading="Ledger for this agreement" [padded]="false">
+        <table class="w-full border-collapse text-sm">
+          <thead>
+            <tr class="border-b border-ink-200 bg-ink-50 text-left">
+              <th scope="col" class="px-4 py-2 font-medium text-ink-600">Reference</th>
+              <th scope="col" class="px-4 py-2 font-medium text-ink-600">Kind</th>
+              <th scope="col" class="px-4 py-2 font-medium text-ink-600">Status</th>
+              <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">Amount</th>
+              <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">Outstanding</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (sibling of siblings(); track sibling.id) {
+              <tr
+                class="border-b border-ink-100 last:border-0"
+                [class.bg-brand-100]="sibling.id === row.id"
+              >
+                <td class="tnum px-4 py-2">{{ sibling.reference }}</td>
+                <td class="px-4 py-2">{{ kindLabel(sibling) }}</td>
+                <td class="px-4 py-2">{{ statusLabelOf(sibling) }}</td>
+                <td class="tnum px-4 py-2 text-right">{{ taka(sibling.amount) }}</td>
+                <td class="tnum px-4 py-2 text-right">{{ taka(sibling.outstanding) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </ui-section-card>
+    </div>
+
+    <div class="space-y-4">
+      <!-- The data the decision will change, shown beside the decision itself. -->
+      <ui-section-card heading="Dadhon ceiling" note="Preview">
+        <dl class="space-y-3 text-sm">
+          <div class="flex items-baseline justify-between gap-3">
+            <dt class="text-ink-500">This plot can carry</dt>
+            <dd class="tnum font-medium text-ink-900">{{ taka(ceiling()) }}</dd>
+          </div>
+          <div class="flex items-baseline justify-between gap-3">
+            <dt class="text-ink-500">Committed already</dt>
+            <dd class="tnum font-medium text-ink-900">{{ taka(committed()) }}</dd>
+          </div>
+          <div class="flex items-baseline justify-between gap-3 border-t border-ink-100 pt-3">
+            <dt class="text-ink-500">Left to draw</dt>
+            <dd class="tnum font-medium text-ink-900">{{ taka(available()) }}</dd>
+          </div>
+        </dl>
+
+        <p class="mt-4 flex items-start gap-2 rounded-md bg-ink-50 px-3 py-2 text-xs text-ink-600">
+          <span class="mt-0.5 text-brand-600"><ui-icon name="coins" [size]="14" /></span>
+          <span>
+            A pending row counts its full amount; an active one counts only what is still
+            outstanding. Repaying or refusing gives that share of the ceiling back.
+          </span>
+        </p>
+      </ui-section-card>
+
+      @if (decidable()) {
+        <ui-section-card heading="Decision">
+          <p class="mb-3 text-sm text-ink-600">
+            Approving hands {{ taka(row.amount) }} to {{ partyName(row.sharecropperId) }} and opens
+            the balance the settlement will deduct. Refusing needs a reason.
+          </p>
+
+          <label for="decision-note" class="block text-sm font-medium text-ink-700">
+            Reason <span class="text-ink-500">(required to refuse)</span>
+          </label>
+          <textarea
+            id="decision-note"
+            rows="3"
+            [value]="note()"
+            (input)="onNote($event)"
+            class="mt-1 w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+            placeholder="Recorded on the ledger row and in the audit trail."
+          ></textarea>
+          @if (noteError(); as message) {
+            <p class="mt-1 text-xs text-bad-700" role="alert">{{ message }}</p>
+          }
+
+          <div class="mt-3 flex flex-col gap-2 sm:flex-row">
+            <button
+              type="button"
+              (click)="approve()"
+              [disabled]="saving()"
+              class="inline-flex flex-1 items-center justify-center gap-1.5 rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+            >
+              <ui-icon name="check-shield" [size]="15" />
+              Approve & release
+            </button>
+            <button
+              type="button"
+              (click)="reject()"
+              [disabled]="saving()"
+              class="inline-flex flex-1 items-center justify-center gap-1.5 rounded-md border border-bad-600 px-3 py-2 text-sm font-medium text-bad-700 hover:bg-bad-100 disabled:opacity-60"
+            >
+              Refuse
+            </button>
+          </div>
+        </ui-section-card>
+      }
+
+      @if (repayable()) {
+        <ui-section-card heading="Record a repayment">
+          <p class="mb-3 text-sm text-ink-600">
+            {{ taka(row.outstanding) }} is still outstanding. Clearing it closes the row and gives
+            its share of the ceiling back to the plot.
+          </p>
+
+          <label for="repayment" class="block text-sm font-medium text-ink-700">Amount (৳)</label>
+          <input
+            id="repayment"
+            type="number"
+            min="0"
+            step="100"
+            [value]="repayment()"
+            (input)="onRepayment($event)"
+            class="tnum mt-1 w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+          />
+          @if (repayError(); as message) {
+            <p class="mt-1 text-xs text-bad-700" role="alert">{{ message }}</p>
+          }
+
+          <button
+            type="button"
+            (click)="repay()"
+            [disabled]="saving()"
+            class="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded-md border border-brand-600 px-3 py-2 text-sm font-medium text-brand-700 hover:bg-brand-100 disabled:opacity-60"
+          >
+            <ui-icon name="coins" [size]="15" />
+            Record repayment
+          </button>
+        </ui-section-card>
+      }
+    </div>
+  </div>
+} @else {
+  <p class="py-16 text-center text-sm text-ink-500">Loading advance…</p>
+}

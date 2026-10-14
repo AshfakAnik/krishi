@@ -1,0 +1,51 @@
+<ui-page-header
+  eyebrow="Cultivation"
+  title="Farming Activities"
+  subtitle="What was done in the field, what it cost, and which side of the agreement carries it."
+>
+  <button
+    type="button"
+    (click)="formOpen.set(true)"
+    class="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700"
+  >
+    <ui-icon name="list" [size]="15" />
+    Record activity
+  </button>
+</ui-page-header>
+
+@if (error(); as message) {
+  <ui-alert tone="bad" [message]="message" (dismissed)="clearError()" />
+}
+
+<div class="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+  <ui-kpi-tile
+    label="Cultivation cost"
+    [value]="taka(totals().total)"
+    hint="Everything recorded so far"
+  />
+  <ui-kpi-tile
+    label="Borne by the owner"
+    [value]="taka(totals().owner)"
+    tone="ok"
+    hint="From the negotiated terms"
+  />
+  <ui-kpi-tile
+    label="Borne by the sharecropper"
+    [value]="taka(totals().sharecropper)"
+    tone="brand"
+    hint="Deducted at settlement"
+  />
+</div>
+
+<ui-data-table
+  [columns]="columns"
+  [rows]="rows()"
+  [loading]="loading()"
+  searchPlaceholder="Search by reference, cycle, plot or activity"
+  emptyTitle="Nothing recorded yet"
+  emptyHint="Record an activity against a live cycle to start building its cost."
+/>
+
+@if (formOpen()) {
+  <app-activity-form (closed)="formOpen.set(false)" />
+}

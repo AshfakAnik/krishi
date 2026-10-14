@@ -1,0 +1,150 @@
+<ui-page-header
+  eyebrow="Setup"
+  title="Owners & Sharecroppers"
+  subtitle="Everybody who can be party to an agreement, and everybody who can sign in."
+>
+  <button
+    type="button"
+    (click)="editing.set('new')"
+    class="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700"
+  >
+    <ui-icon name="edit" [size]="15" />
+    New person
+  </button>
+</ui-page-header>
+
+@if (error(); as message) {
+  <ui-alert tone="bad" [message]="message" (dismissed)="clearError()" />
+}
+
+@if (blocked(); as message) {
+  <ui-alert tone="warn" [message]="message" (dismissed)="blocked.set('')" />
+}
+
+@if (undoable(); as removed) {
+  <div
+    role="status"
+    class="mb-4 flex flex-col gap-2 rounded-md border border-ink-200 bg-ink-50 px-3 py-2 text-sm text-ink-700 sm:flex-row sm:items-center"
+  >
+    <span class="min-w-0 flex-1">{{ removed.name }} removed.</span>
+    <button
+      type="button"
+      (click)="undoRemove()"
+      class="shrink-0 rounded-md border border-ink-300 px-2.5 py-1 text-sm font-medium text-ink-900 hover:bg-white"
+    >
+      Undo
+    </button>
+  </div>
+}
+
+<div class="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+  <ui-kpi-tile label="Land owners" [value]="ownerCount()" hint="Can draft agreements" />
+  <ui-kpi-tile label="Sharecroppers" [value]="tenantCount()" hint="Can be party to one" />
+  <ui-kpi-tile
+    label="Dadhon outstanding"
+    [value]="taka(totalOutstanding())"
+    [tone]="totalOutstanding() ? 'warn' : 'neutral'"
+    hint="Owed across every tenant"
+  />
+</div>
+
+<div class="relative overflow-x-auto rounded-lg border border-ink-200 bg-white">
+  <table class="w-full border-collapse text-sm">
+    <caption class="sr-only">
+      Everybody recorded, with their role, village and what they are involved in
+    </caption>
+    <thead>
+      <tr class="border-b border-ink-200 bg-ink-50 text-left">
+        <th scope="col" class="px-4 py-2 font-medium text-ink-600">Name</th>
+        <th scope="col" class="px-4 py-2 font-medium text-ink-600">Role</th>
+        <th scope="col" class="px-4 py-2 font-medium text-ink-600">Status</th>
+        <th scope="col" class="px-4 py-2 font-medium text-ink-600">Village</th>
+        <th scope="col" class="px-4 py-2 font-medium text-ink-600">Mobile</th>
+        <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">Plots</th>
+        <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">Agreements</th>
+        <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">Owes</th>
+        <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">
+          <span class="sr-only">Actions</span>
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (loading()) {
+        <tr>
+          <td colspan="9" class="px-4 py-8 text-center text-ink-500">Loading people…</td>
+        </tr>
+      } @else {
+        @for (row of rows(); track row.id) {
+          <tr class="border-b border-ink-100 last:border-0">
+            <td class="px-4 py-2 font-medium text-ink-900">
+              {{ row.name }}
+              @if (row.seasonsWorked !== undefined) {
+                <span class="block text-xs text-ink-500">
+                  {{ row.seasonsWorked }} season{{ row.seasonsWorked === 1 ? '' : 's' }} worked
+                </span>
+              }
+            </td>
+            <td class="px-4 py-2">
+              <ui-status-badge [label]="roleLabel(row)" [tone]="roleTone(row.role)" />
+            </td>
+            <td class="px-4 py-2">
+              <ui-status-badge [label]="statusLabels[row.status]" [tone]="statusTone(row.status)" />
+            </td>
+            <td class="px-4 py-2 text-ink-600">{{ row.village }}</td>
+            <td class="tnum px-4 py-2 text-ink-600">{{ row.phone }}</td>
+            <td class="tnum px-4 py-2 text-right">{{ plotsOf(row) }}</td>
+            <td class="tnum px-4 py-2 text-right">{{ agreementsOf(row) }}</td>
+            <td class="tnum px-4 py-2 text-right">{{ owed(row) }}</td>
+            <td class="px-4 py-2">
+              <div class="flex justify-end gap-1">
+                @if (row.status === 'pending') {
+                  <button
+                    type="button"
+                    (click)="approve(row)"
+                    class="rounded-md border border-ink-200 px-2.5 py-1 text-xs font-medium text-ok-700 hover:border-ok-600 hover:bg-ok-100"
+                    [attr.aria-label]="'Approve ' + row.name"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    type="button"
+                    (click)="reject(row)"
+                    class="rounded-md border border-ink-200 px-2.5 py-1 text-xs font-medium text-bad-700 hover:border-bad-600 hover:bg-bad-100"
+                    [attr.aria-label]="'Reject ' + row.name"
+                  >
+                    Reject
+                  </button>
+                }
+                <button
+                  type="button"
+                  (click)="edit(row)"
+                  class="rounded-md border border-ink-200 px-2.5 py-1 text-xs font-medium text-ink-700 hover:border-brand-400 hover:text-brand-700"
+                  [attr.aria-label]="'Edit ' + row.name"
+                >
+                  Edit
+                </button>
+                <button
+                  type="button"
+                  (click)="remove(row)"
+                  class="rounded-md border border-ink-200 px-2.5 py-1 text-xs font-medium text-bad-700 hover:border-bad-600 hover:bg-bad-100"
+                  [attr.aria-label]="'Remove ' + row.name"
+                  [title]="blockerFor(row) || 'Remove this person'"
+                >
+                  Remove
+                </button>
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="9" class="px-4 py-8 text-center text-ink-500">Nobody recorded yet.</td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>
+
+@if (editing()) {
+  <app-party-form [editing]="editingParty()" (closed)="editing.set(null)" />
+}

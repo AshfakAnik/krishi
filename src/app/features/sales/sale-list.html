@@ -1,0 +1,48 @@
+<ui-page-header
+  eyebrow="Harvest & Sales"
+  title="Sales"
+  subtitle="Batch sales off stock lots, with market haque and transport taken off the gross."
+>
+  <button
+    type="button"
+    (click)="formOpen.set(true)"
+    class="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700"
+  >
+    <ui-icon name="tag" [size]="15" />
+    Record sale
+  </button>
+</ui-page-header>
+
+@if (error(); as message) {
+  <ui-alert tone="bad" [message]="message" (dismissed)="clearError()" />
+}
+
+<div class="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+  <ui-kpi-tile label="Sold" [value]="maund(soldQuantity())" hint="Across every sale" />
+  <ui-kpi-tile label="Gross" [value]="taka(grossTotal())" hint="Before deductions" />
+  <ui-kpi-tile
+    label="Haque + transport"
+    [value]="taka(deductionTotal())"
+    tone="warn"
+    hint="Taken off at the haat"
+  />
+  <ui-kpi-tile
+    label="Net"
+    [value]="taka(netTotal())"
+    tone="ok"
+    hint="What the settlement divides"
+  />
+</div>
+
+<ui-data-table
+  [columns]="columns"
+  [rows]="rows()"
+  [loading]="loading()"
+  searchPlaceholder="Search by reference, lot, cycle or buyer"
+  emptyTitle="Nothing sold yet"
+  emptyHint="Record a sale off a stock lot that still has produce in it."
+/>
+
+@if (formOpen()) {
+  <app-sale-form (closed)="formOpen.set(false)" />
+}

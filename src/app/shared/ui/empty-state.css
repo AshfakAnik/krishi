@@ -1,0 +1,7 @@
+/* empty-state — component-scoped styles.
+ *
+ * Layout and colour are Tailwind utilities in empty-state.html; this file exists
+ * for styles that genuinely belong to this component alone (host display,
+ * animations, :host-context overrides). Empty is the correct default — add
+ * a rule here only when a utility class cannot express it.
+ */

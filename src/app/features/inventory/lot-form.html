@@ -1,0 +1,105 @@
+<ui-modal
+  heading="Record a stock lot"
+  description="For produce that reached store without a processing step."
+  (dismiss)="closed.emit()"
+>
+  <form [formGroup]="form" (ngSubmit)="submit()" id="lot-form">
+    <ui-form-field label="Cycle" for="l-cycleId" [error]="errorFor('cycleId')">
+      <select
+        id="l-cycleId"
+        formControlName="cycleId"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      >
+        <option value="">Select a cycle</option>
+        @for (cycle of cycles(); track cycle.id) {
+          <option [value]="cycle.id">{{ cycle.reference }}</option>
+        }
+      </select>
+    </ui-form-field>
+
+    <ui-form-field label="Quantity (maund)" for="l-quantity" [error]="errorFor('quantity')">
+      <input
+        id="l-quantity"
+        type="number"
+        min="0"
+        step="1"
+        formControlName="quantity"
+        class="tnum w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      />
+    </ui-form-field>
+
+    <ui-form-field label="Grade" for="l-grade" [error]="errorFor('grade')">
+      <select
+        id="l-grade"
+        formControlName="grade"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      >
+        @for (grade of grades; track grade) {
+          <option [value]="grade">{{ gradeLabels[grade] }}</option>
+        }
+      </select>
+    </ui-form-field>
+
+    <ui-form-field
+      label="Held for"
+      for="l-heldFor"
+      [error]="errorFor('heldFor')"
+      hint="Pooled produce is undivided until the settlement runs."
+    >
+      <select
+        id="l-heldFor"
+        formControlName="heldFor"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      >
+        @for (holder of holders; track holder) {
+          <option [value]="holder">{{ holderLabels[holder] }}</option>
+        }
+      </select>
+    </ui-form-field>
+
+    <ui-form-field label="Where" for="l-location" [error]="errorFor('location')">
+      <input
+        id="l-location"
+        type="text"
+        formControlName="location"
+        placeholder="Char Boalia store, north bay"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      />
+    </ui-form-field>
+
+    <ui-form-field label="Stored on" for="l-storedOn" [error]="errorFor('storedOn')">
+      <input
+        id="l-storedOn"
+        type="date"
+        formControlName="storedOn"
+        class="tnum w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      />
+    </ui-form-field>
+
+    @if (attempted() && hasErrors()) {
+      <ui-alert
+        tone="warn"
+        message="Some details still need fixing — see the fields marked above."
+        [dismissible]="false"
+      />
+    }
+  </form>
+
+  <ng-container modalActions>
+    <button
+      type="button"
+      (click)="closed.emit()"
+      class="rounded-md border border-ink-200 px-3 py-2 text-sm text-ink-700 hover:border-ink-300"
+    >
+      Cancel
+    </button>
+    <button
+      type="submit"
+      form="lot-form"
+      [disabled]="saving()"
+      class="rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+    >
+      {{ saving() ? 'Recording…' : 'Record lot' }}
+    </button>
+  </ng-container>
+</ui-modal>

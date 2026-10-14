@@ -1,0 +1,18 @@
+<div class="mb-4">
+  <label [attr.for]="for()" class="block text-sm font-medium text-ink-700">
+    {{ label() }}
+    @if (!optional()) {
+      <span class="text-bad-600" aria-hidden="true">*</span>
+    }
+  </label>
+
+  <div class="mt-1">
+    <ng-content />
+  </div>
+
+  @if (error()) {
+    <p class="mt-1 text-xs text-bad-700" role="alert">{{ error() }}</p>
+  } @else if (hint()) {
+    <p class="mt-1 text-xs text-ink-500">{{ hint() }}</p>
+  }
+</div>

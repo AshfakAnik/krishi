@@ -1,0 +1,62 @@
+/* You can add global styles to this file, and also import other style files */
+
+@import 'tailwindcss';
+/* Design tokens. Slate-green neutrals + a field-green primary, for an
+   agriculture app. Status colours carry one meaning across every module:
+   approved / pending / rejected-or-blocked. Keep the token NAMES; the shared
+   UI components bind to them and Tailwind v4 silently skips an unmatched
+   utility, so a rename produces invisible borders with no build error. */
+@theme {
+  --color-ink-950: #0b1114;
+  --color-ink-900: #131b1f;
+  --color-ink-800: #1d272c;
+  --color-ink-700: #2a363c;
+  --color-ink-600: #435055;
+  --color-ink-500: #5f6d73;
+  --color-ink-400: #879499;
+  --color-ink-300: #b2bcc0;
+  --color-ink-200: #d5dcdf;
+  --color-ink-100: #e8edef;
+  --color-ink-50: #f5f8f9;
+  --color-brand-800: #14401f;
+  --color-brand-700: #1a5327;
+  --color-brand-600: #20692f;
+  --color-brand-500: #2f8140;
+  --color-brand-400: #5ba169;
+  --color-brand-300: #93c39c;
+  --color-brand-100: #e2f1e5;
+  --color-ok-700: #14603a;
+  --color-ok-600: #1f7a4c;
+  --color-ok-100: #e3f2e9;
+  --color-warn-700: #8d5a00;
+  --color-warn-600: #b77400;
+  --color-warn-100: #fdf1dc;
+  --color-bad-700: #822c22;
+  --color-bad-600: #a63a2e;
+  --color-bad-100: #fbe7e4;
+  --font-sans:
+    system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --font-mono:
+    ui-monospace, 'SF Mono', 'Cascadia Mono', 'JetBrains Mono', Menlo, Consolas,
+    monospace;
+}
+html {
+  color-scheme: light;
+}
+body {
+  margin: 0;
+  background: var(--color-ink-50);
+  color: var(--color-ink-900);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+/* Money, hours and codes must align down a column. */
+.tnum {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+}

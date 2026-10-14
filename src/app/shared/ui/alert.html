@@ -1,0 +1,43 @@
+<div
+  [attr.role]="tone() === 'bad' || tone() === 'warn' ? 'alert' : 'status'"
+  class="mb-4 flex items-start gap-2 rounded-md border px-3 py-2 text-sm"
+  [class.border-bad-600]="tone() === 'bad'"
+  [class.bg-bad-100]="tone() === 'bad'"
+  [class.text-bad-700]="tone() === 'bad'"
+  [class.border-warn-600]="tone() === 'warn'"
+  [class.bg-warn-100]="tone() === 'warn'"
+  [class.text-warn-700]="tone() === 'warn'"
+  [class.border-ok-600]="tone() === 'ok'"
+  [class.bg-ok-100]="tone() === 'ok'"
+  [class.text-ok-700]="tone() === 'ok'"
+  [class.border-brand-400]="tone() === 'brand'"
+  [class.bg-brand-100]="tone() === 'brand'"
+  [class.text-brand-700]="tone() === 'brand'"
+  [class.border-ink-200]="tone() === 'neutral'"
+  [class.bg-ink-50]="tone() === 'neutral'"
+  [class.text-ink-700]="tone() === 'neutral'"
+>
+  <span class="min-w-0 flex-1">{{ message() }}</span>
+
+  @if (dismissible()) {
+    <button
+      type="button"
+      (click)="dismissed.emit()"
+      class="shrink-0 rounded p-0.5 opacity-70 hover:opacity-100"
+      aria-label="Dismiss"
+    >
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 20 20"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        aria-hidden="true"
+      >
+        <path d="M5 5l10 10M15 5 5 15" />
+      </svg>
+    </button>
+  }
+</div>

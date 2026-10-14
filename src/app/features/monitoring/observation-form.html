@@ -1,0 +1,135 @@
+<ui-modal
+  heading="Record an observation"
+  description="Damage here moves the cycle's expected yield, which every settlement figure derives from."
+  (dismiss)="closed.emit()"
+>
+  <form [formGroup]="form" (ngSubmit)="submit()" id="observation-form">
+    <ui-form-field
+      label="Cycle"
+      for="o-cycleId"
+      [error]="errorFor('cycleId')"
+      hint="Only live cycles — a settled one has a final yield."
+    >
+      <select
+        id="o-cycleId"
+        formControlName="cycleId"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      >
+        <option value="">Select a cycle</option>
+        @for (cycle of availableCycles(); track cycle.id) {
+          <option [value]="cycle.id">{{ cycleLabel(cycle.id) }}</option>
+        }
+      </select>
+    </ui-form-field>
+
+    <ui-form-field label="Kind" for="o-kind" [error]="errorFor('kind')">
+      <select
+        id="o-kind"
+        formControlName="kind"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      >
+        @for (kind of kinds; track kind) {
+          <option [value]="kind">{{ kindLabels[kind] }}</option>
+        }
+      </select>
+    </ui-form-field>
+
+    <ui-form-field label="Stage" for="o-stage" [error]="errorFor('stage')">
+      <select
+        id="o-stage"
+        formControlName="stage"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      >
+        @for (stage of stages; track stage) {
+          <option [value]="stage">{{ stageLabels[stage] }}</option>
+        }
+      </select>
+    </ui-form-field>
+
+    <ui-form-field
+      label="Cause"
+      for="o-cause"
+      [error]="errorFor('cause')"
+      hint="A yield never drops without a cause on the record."
+    >
+      <select
+        id="o-cause"
+        formControlName="cause"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      >
+        @for (cause of causes; track cause) {
+          <option [value]="cause">{{ causeLabels[cause] }}</option>
+        }
+      </select>
+    </ui-form-field>
+
+    <ui-form-field label="Damage (%)" for="o-damage" [error]="errorFor('damagePercent')">
+      <input
+        id="o-damage"
+        type="number"
+        min="0"
+        max="100"
+        step="1"
+        formControlName="damagePercent"
+        class="tnum w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      />
+    </ui-form-field>
+
+    <ui-form-field label="Observed on" for="o-observedOn" [error]="errorFor('observedOn')">
+      <input
+        id="o-observedOn"
+        type="date"
+        formControlName="observedOn"
+        class="tnum w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      />
+    </ui-form-field>
+
+    <ui-form-field label="What was seen" for="o-note" [error]="errorFor('note')">
+      <textarea
+        id="o-note"
+        rows="2"
+        formControlName="note"
+        placeholder="Stem borer through the north corner."
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      ></textarea>
+    </ui-form-field>
+
+    @if (selectedCycle()) {
+      <div
+        class="mt-2 rounded-md px-3 py-2 text-xs"
+        [class.bg-warn-100]="willAdjust()"
+        [class.text-warn-700]="willAdjust()"
+        [class.bg-ink-50]="!willAdjust()"
+        [class.text-ink-600]="!willAdjust()"
+      >
+        {{ yieldPreview() }}
+      </div>
+    }
+
+    @if (attempted() && hasErrors()) {
+      <ui-alert
+        tone="warn"
+        message="Some details still need fixing — see the fields marked above."
+        [dismissible]="false"
+      />
+    }
+  </form>
+
+  <ng-container modalActions>
+    <button
+      type="button"
+      (click)="closed.emit()"
+      class="rounded-md border border-ink-200 px-3 py-2 text-sm text-ink-700 hover:border-ink-300"
+    >
+      Cancel
+    </button>
+    <button
+      type="submit"
+      form="observation-form"
+      [disabled]="saving()"
+      class="rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+    >
+      {{ saving() ? 'Recording…' : 'Record observation' }}
+    </button>
+  </ng-container>
+</ui-modal>

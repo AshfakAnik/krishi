@@ -1,0 +1,34 @@
+<nav class="flex flex-col gap-5 px-3 py-4" aria-label="Modules">
+  @for (group of groups(); track group.name) {
+    <div>
+      <!-- ink-500, not ink-400: at 12px uppercase, ink-400 on white is 3.12:1
+           and fails WCAG AA. ink-500 is 5.35:1. -->
+      <p class="px-2 pb-1.5 text-xs font-semibold tracking-wide text-ink-500 uppercase">
+        {{ group.name }}
+      </p>
+      <ul class="space-y-0.5">
+        @for (entry of group.entries; track entry.path) {
+          <li>
+            <a
+              [routerLink]="['/', entry.path]"
+              routerLinkActive="bg-brand-100 text-brand-700 font-medium"
+              (click)="navigated.emit()"
+              class="flex items-center gap-2.5 rounded-md px-2 py-1.5 text-sm text-ink-700 hover:bg-ink-100"
+            >
+              <ui-icon [name]="entry.icon" [size]="16" />
+              <span class="min-w-0 flex-1 truncate">{{ entry.label }}</span>
+              @if (!entry.built) {
+                <span
+                  class="shrink-0 rounded bg-ink-100 px-1.5 py-0.5 text-[10px] text-ink-500"
+                  title="Planned — not built yet"
+                >
+                  soon
+                </span>
+              }
+            </a>
+          </li>
+        }
+      </ul>
+    </div>
+  }
+</nav>

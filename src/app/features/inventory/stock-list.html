@@ -1,0 +1,136 @@
+<ui-page-header
+  eyebrow="Harvest & Sales"
+  title="Storage & Inventory"
+  subtitle="Stored produce, wastage adjustment, and the in-kind split that pays a share in crop."
+>
+  <button
+    type="button"
+    (click)="formOpen.set(true)"
+    class="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700"
+  >
+    <ui-icon name="layers" [size]="15" />
+    Record lot
+  </button>
+</ui-page-header>
+
+@if (error(); as message) {
+  <ui-alert tone="bad" [message]="message" (dismissed)="clearError()" />
+}
+
+@if (actionError(); as message) {
+  <ui-alert tone="warn" [message]="message" (dismissed)="actionError.set('')" />
+}
+
+<div class="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+  <ui-kpi-tile label="In store" [value]="maund(totalStock())" hint="Across every lot" />
+  <ui-kpi-tile
+    label="Undivided"
+    [value]="maund(totals().pool)"
+    [tone]="totals().pool ? 'warn' : 'ok'"
+    hint="Pooled, awaiting settlement"
+  />
+  <ui-kpi-tile
+    label="Owner's share"
+    [value]="maund(totals().owner)"
+    tone="ok"
+    hint="Split in kind"
+  />
+  <ui-kpi-tile
+    label="Sharecropper's share"
+    [value]="maund(totals().sharecropper)"
+    tone="brand"
+    hint="Split in kind"
+  />
+</div>
+
+<div class="relative overflow-x-auto rounded-lg border border-ink-200 bg-white">
+  <table class="w-full border-collapse text-sm">
+    <caption class="sr-only">
+      Stock lots, with what is left after sales
+    </caption>
+    <thead>
+      <tr class="border-b border-ink-200 bg-ink-50 text-left">
+        <th scope="col" class="px-4 py-2 font-medium text-ink-600">Lot</th>
+        <th scope="col" class="px-4 py-2 font-medium text-ink-600">Cycle</th>
+        <th scope="col" class="px-4 py-2 font-medium text-ink-600">Grade</th>
+        <th scope="col" class="px-4 py-2 font-medium text-ink-600">Held for</th>
+        <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">In lot</th>
+        <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">Left</th>
+        <th scope="col" class="px-4 py-2 font-medium text-ink-600">Where</th>
+        <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">
+          <span class="sr-only">Actions</span>
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (loading()) {
+        <tr>
+          <td colspan="8" class="px-4 py-8 text-center text-ink-500">Loading stock…</td>
+        </tr>
+      } @else {
+        @for (lot of rows(); track lot.id) {
+          <tr class="border-b border-ink-100 last:border-0">
+            <td class="tnum px-4 py-2 font-medium text-ink-900">{{ lot.reference }}</td>
+            <td class="tnum px-4 py-2 text-ink-600">{{ cycleRef(lot) }}</td>
+            <td class="px-4 py-2 text-ink-600">{{ gradeLabel(lot) }}</td>
+            <td class="px-4 py-2">
+              <ui-status-badge [label]="holderLabels[lot.heldFor]" [tone]="holderTone(lot)" />
+            </td>
+            <td class="tnum px-4 py-2 text-right">{{ maund(lot.quantity) }}</td>
+            <td class="tnum px-4 py-2 text-right">{{ maund(left(lot)) }}</td>
+            <td class="px-4 py-2 text-ink-600">
+              {{ lot.location }}
+              <span class="block text-xs text-ink-500">stored {{ date(lot.storedOn) }}</span>
+            </td>
+            <td class="px-4 py-2">
+              <div class="flex items-end justify-end gap-2">
+                <span class="flex flex-col">
+                  <label [for]="'adj-' + lot.id" class="mb-1 text-xs text-ink-600">Lost</label>
+                  <input
+                    [id]="'adj-' + lot.id"
+                    type="number"
+                    min="0"
+                    step="1"
+                    [value]="adjustmentFor(lot)"
+                    (input)="onAdjustment(lot, $event)"
+                    class="tnum w-20 rounded-md border border-ink-200 px-2 py-1 text-sm focus:border-brand-500 focus:outline-none"
+                  />
+                </span>
+                <button
+                  type="button"
+                  (click)="recordLoss(lot)"
+                  [disabled]="saving()"
+                  class="rounded-md border border-ink-200 px-2.5 py-1 text-xs font-medium text-ink-700 hover:border-bad-600 hover:text-bad-700 disabled:opacity-60"
+                  [attr.aria-label]="'Write off stock from ' + lot.reference"
+                >
+                  Write off
+                </button>
+                @if (splittable(lot)) {
+                  <button
+                    type="button"
+                    (click)="split(lot)"
+                    [disabled]="saving()"
+                    class="rounded-md bg-brand-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+                    [attr.aria-label]="'Split ' + lot.reference + ' in kind'"
+                  >
+                    Split in kind
+                  </button>
+                }
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="8" class="px-4 py-8 text-center text-ink-500">
+              Nothing in store. Complete a processing batch, or record a lot directly.
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>
+
+@if (formOpen()) {
+  <app-lot-form (closed)="formOpen.set(false)" />
+}

@@ -1,0 +1,185 @@
+@if (agreement(); as row) {
+  <ui-page-header
+    eyebrow="Sharecropping Agreement"
+    [title]="row.reference"
+    [subtitle]="partyName(row.sharecropperId) + ' · ' + date(row.startsOn)"
+    backLink="/agreements"
+    backLabel="All agreements"
+  >
+    <ui-status-badge [label]="statusLabel()" [tone]="statusTone()" />
+
+    @if (discardable()) {
+      <button
+        type="button"
+        (click)="discard()"
+        [disabled]="saving()"
+        class="inline-flex items-center justify-center gap-1.5 rounded-md border border-bad-600 px-3 py-2 text-sm font-medium text-bad-700 hover:bg-bad-100 disabled:opacity-60"
+      >
+        <ui-icon name="close" [size]="15" />
+        Discard draft
+      </button>
+    }
+  </ui-page-header>
+
+  @if (error(); as message) {
+    <ui-alert tone="bad" [message]="message" (dismissed)="clearError()" />
+  }
+
+  @if (row.decisionNote) {
+    <ui-alert
+      [tone]="row.status === 'rejected' || row.status === 'revoked' ? 'bad' : 'neutral'"
+      [message]="row.decidedBy + ': ' + row.decisionNote"
+      [dismissible]="false"
+    />
+  }
+
+  <div class="grid gap-4 lg:grid-cols-3">
+    <div class="space-y-4 lg:col-span-2">
+      <ui-section-card heading="Agreement">
+        <ui-field-list [fields]="summary()" />
+      </ui-section-card>
+
+      <ui-section-card heading="Negotiated terms">
+        <ui-field-list [fields]="terms()" />
+      </ui-section-card>
+
+      <ui-section-card heading="Advance ledger (dadhon)" [padded]="false">
+        @if (!ledger().length) {
+          <p class="px-4 py-4 text-sm text-ink-500">
+            No advance recorded. One is opened automatically when the agreement is activated with a
+            signing advance.
+          </p>
+        } @else {
+          <table class="w-full border-collapse text-sm">
+            <thead>
+              <tr class="border-b border-ink-200 bg-ink-50 text-left">
+                <th scope="col" class="px-4 py-2 font-medium text-ink-600">Issued</th>
+                <th scope="col" class="px-4 py-2 font-medium text-ink-600">Kind</th>
+                <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">Amount</th>
+                <th scope="col" class="px-4 py-2 text-right font-medium text-ink-600">
+                  Outstanding
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (entry of ledger(); track entry.id) {
+                <tr class="border-b border-ink-100 last:border-0">
+                  <td class="tnum px-4 py-2">{{ date(entry.issuedOn) }}</td>
+                  <td class="px-4 py-2">
+                    {{ entry.kind === 'signing' ? 'At signing' : 'Mid-season' }}
+                  </td>
+                  <td class="tnum px-4 py-2 text-right">{{ taka(entry.amount) }}</td>
+                  <td class="tnum px-4 py-2 text-right">{{ taka(entry.outstanding) }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </ui-section-card>
+    </div>
+
+    <div class="space-y-4">
+      <!-- The data the decision will change, shown beside the decision itself. -->
+      <ui-section-card heading="If approved" note="Preview">
+        <dl class="space-y-3 text-sm">
+          <div class="flex items-baseline justify-between gap-3">
+            <dt class="text-ink-500">Expected harvest</dt>
+            <dd class="tnum font-medium text-ink-900">{{ maund(yieldMaund()) }}</dd>
+          </div>
+          <div class="flex items-baseline justify-between gap-3">
+            <dt class="text-ink-500">Owner's share</dt>
+            <dd class="tnum font-medium text-ink-900">{{ maund(split().owner) }}</dd>
+          </div>
+          <div class="flex items-baseline justify-between gap-3">
+            <dt class="text-ink-500">Sharecropper's share</dt>
+            <dd class="tnum font-medium text-ink-900">{{ maund(split().sharecropper) }}</dd>
+          </div>
+          <div class="flex items-baseline justify-between gap-3 border-t border-ink-100 pt-3">
+            <dt class="text-ink-500">Advance to recover</dt>
+            <dd class="tnum font-medium text-ink-900">{{ taka(row.advanceAmount) }}</dd>
+          </div>
+          <div class="flex items-baseline justify-between gap-3">
+            <dt class="text-ink-500">Currently outstanding</dt>
+            <dd class="tnum font-medium text-ink-900">{{ taka(outstanding()) }}</dd>
+          </div>
+        </dl>
+
+        @if (cycle(); as activeCycle) {
+          <p
+            class="mt-4 flex items-start gap-2 rounded-md bg-ink-50 px-3 py-2 text-xs text-ink-600"
+          >
+            <span class="mt-0.5 text-brand-600"><ui-icon name="timer" [size]="14" /></span>
+            <span>
+              Cultivation cycle <span class="tnum">{{ activeCycle.reference }}</span> is
+              {{ activeCycle.status }}, expecting {{ maund(activeCycle.expectedYield) }}.
+            </span>
+          </p>
+        }
+      </ui-section-card>
+
+      @if (decidable() || revocable()) {
+        <ui-section-card [heading]="decidable() ? 'Decision' : 'Revoke agreement'">
+          <p class="mb-3 text-sm text-ink-600">
+            @if (decidable()) {
+              Approving claims {{ partyName(row.ownerId) }}'s plot for this season, opens a
+              cultivation cycle and records the advance. Rejecting needs a reason.
+            } @else {
+              Revoking releases the plot, aborts the cultivation cycle and needs a reason.
+            }
+          </p>
+
+          <label for="decision-note" class="block text-sm font-medium text-ink-700">
+            Reason
+            @if (decidable()) {
+              <span class="text-ink-500">(required to reject)</span>
+            }
+          </label>
+          <textarea
+            id="decision-note"
+            rows="3"
+            [value]="note()"
+            (input)="onNote($event)"
+            class="mt-1 w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+            placeholder="Recorded on the agreement and in the audit trail."
+          ></textarea>
+          @if (noteError(); as message) {
+            <p class="mt-1 text-xs text-bad-700" role="alert">{{ message }}</p>
+          }
+
+          <div class="mt-3 flex flex-col gap-2 sm:flex-row">
+            @if (decidable()) {
+              <button
+                type="button"
+                (click)="approve()"
+                [disabled]="saving()"
+                class="inline-flex flex-1 items-center justify-center gap-1.5 rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+              >
+                <ui-icon name="check-shield" [size]="15" />
+                Approve & activate
+              </button>
+              <button
+                type="button"
+                (click)="reject()"
+                [disabled]="saving()"
+                class="inline-flex flex-1 items-center justify-center gap-1.5 rounded-md border border-bad-600 px-3 py-2 text-sm font-medium text-bad-700 hover:bg-bad-100 disabled:opacity-60"
+              >
+                Reject
+              </button>
+            } @else {
+              <button
+                type="button"
+                (click)="revoke()"
+                [disabled]="saving()"
+                class="inline-flex flex-1 items-center justify-center gap-1.5 rounded-md border border-bad-600 px-3 py-2 text-sm font-medium text-bad-700 hover:bg-bad-100 disabled:opacity-60"
+              >
+                Revoke agreement
+              </button>
+            }
+          </div>
+        </ui-section-card>
+      }
+    </div>
+  </div>
+} @else {
+  <p class="py-16 text-center text-sm text-ink-500">Loading agreement…</p>
+}

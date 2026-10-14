@@ -1,0 +1,111 @@
+<ui-modal
+  heading="Open an owner-farming cycle"
+  description="For a plot the owner farms themselves. A sharecropping cycle is opened by approving its agreement."
+  (dismiss)="closed.emit()"
+>
+  <form [formGroup]="form" (ngSubmit)="submit()" id="cycle-form">
+    <ui-form-field label="Season" for="c-seasonId" [error]="errorFor('seasonId')">
+      <select
+        id="c-seasonId"
+        formControlName="seasonId"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      >
+        <option value="">Select a season</option>
+        @for (season of seasons(); track season.id) {
+          <option [value]="season.id">{{ season.name }}</option>
+        }
+      </select>
+    </ui-form-field>
+
+    <ui-form-field
+      label="Plot"
+      for="c-landId"
+      [error]="errorFor('landId')"
+      hint="Plots already carrying a cycle or committed to an agreement this season are not listed."
+    >
+      <select
+        id="c-landId"
+        formControlName="landId"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      >
+        <option value="">Select a plot</option>
+        @for (land of availableLands(); track land.id) {
+          <option [value]="land.id">
+            {{ land.name }} · {{ land.code }} · {{ land.area }} decimal
+          </option>
+        }
+      </select>
+    </ui-form-field>
+
+    <ui-form-field
+      label="Crop"
+      for="c-cropId"
+      [error]="errorFor('cropId')"
+      hint="Only crops the chosen plot's land type tolerates."
+    >
+      <select
+        id="c-cropId"
+        formControlName="cropId"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      >
+        <option value="">Select a crop</option>
+        @for (crop of availableCrops(); track crop.id) {
+          <option [value]="crop.id">{{ crop.name }}</option>
+        }
+      </select>
+    </ui-form-field>
+
+    <ui-form-field label="Variety" for="c-varietyId" [error]="errorFor('varietyId')">
+      <select
+        id="c-varietyId"
+        formControlName="varietyId"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      >
+        <option value="">Select a variety</option>
+        @for (variety of availableVarieties(); track variety.id) {
+          <option [value]="variety.id">{{ variety.name }} · {{ variety.durationDays }} days</option>
+        }
+      </select>
+    </ui-form-field>
+
+    <ui-form-field
+      label="Cultivation starts"
+      for="c-startedOn"
+      [error]="errorFor('startedOn')"
+      [hint]="yieldHint()"
+    >
+      <input
+        id="c-startedOn"
+        type="date"
+        formControlName="startedOn"
+        class="tnum w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      />
+    </ui-form-field>
+
+    @if (attempted() && hasErrors()) {
+      <ui-alert
+        tone="warn"
+        message="Some details still need fixing — see the fields marked above."
+        [dismissible]="false"
+      />
+    }
+  </form>
+
+  <ng-container modalActions>
+    <button
+      type="button"
+      (click)="closed.emit()"
+      class="rounded-md border border-ink-200 px-3 py-2 text-sm text-ink-700 hover:border-ink-300"
+    >
+      Cancel
+    </button>
+    <button
+      type="submit"
+      form="cycle-form"
+      [disabled]="saving()"
+      class="rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+    >
+      {{ saving() ? 'Opening…' : 'Open cycle' }}
+    </button>
+  </ng-container>
+</ui-modal>

@@ -1,0 +1,53 @@
+<ui-page-header
+  eyebrow="Cultivation"
+  title="Cultivation Cycles"
+  subtitle="One cycle per plot per season. Every activity, monitoring log and harvest hangs off one."
+>
+  @if (session.canDraftAgreement()) {
+    <button
+      type="button"
+      (click)="formOpen.set(true)"
+      class="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700"
+    >
+      <ui-icon name="timer" [size]="15" />
+      Owner-farming cycle
+    </button>
+  }
+</ui-page-header>
+
+@if (error(); as message) {
+  <ui-alert tone="bad" [message]="message" (dismissed)="clearError()" />
+}
+
+<div class="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+  <ui-kpi-tile
+    label="Live cycles"
+    [value]="liveCount()"
+    [tone]="queueTone()"
+    hint="Planned, ongoing or harvesting"
+  />
+  <ui-kpi-tile
+    label="Owner-farmed"
+    [value]="ownerFarmedCount()"
+    hint="Opened without an agreement"
+  />
+  <ui-kpi-tile
+    label="Expected harvest"
+    [value]="maund(expectedTotal())"
+    hint="Across every live cycle"
+  />
+</div>
+
+<ui-data-table
+  [columns]="columns"
+  [rows]="rows()"
+  [loading]="loading()"
+  [rowLink]="rowLink"
+  searchPlaceholder="Search by cycle, plot, crop or worker"
+  emptyTitle="No cultivation cycles yet"
+  emptyHint="Approve an agreement, or open an owner-farming cycle on a free plot."
+/>
+
+@if (formOpen()) {
+  <app-cycle-form (closed)="formOpen.set(false)" />
+}

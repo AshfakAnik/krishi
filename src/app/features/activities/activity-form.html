@@ -1,0 +1,123 @@
+<ui-modal
+  heading="Record a farming activity"
+  description="Who carries the cost is read from the agreement's terms, not asked."
+  (dismiss)="closed.emit()"
+>
+  <form [formGroup]="form" (ngSubmit)="submit()" id="activity-form">
+    <ui-form-field
+      label="Cycle"
+      for="a-cycleId"
+      [error]="errorFor('cycleId')"
+      hint="Only live cycles — a settled one has already had its costs divided."
+    >
+      <select
+        id="a-cycleId"
+        formControlName="cycleId"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      >
+        <option value="">Select a cycle</option>
+        @for (cycle of availableCycles(); track cycle.id) {
+          <option [value]="cycle.id">{{ cycleLabel(cycle.id) }}</option>
+        }
+      </select>
+    </ui-form-field>
+
+    <ui-form-field label="Activity" for="a-kind" [error]="errorFor('kind')">
+      <select
+        id="a-kind"
+        formControlName="kind"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      >
+        @for (kind of kinds; track kind) {
+          <option [value]="kind">{{ kindLabels[kind] }}</option>
+        }
+      </select>
+    </ui-form-field>
+
+    <ui-form-field
+      label="Cost line"
+      for="a-costLine"
+      [error]="errorFor('costLine')"
+      hint="Which responsibility on the agreement this expense falls under."
+    >
+      <select
+        id="a-costLine"
+        formControlName="costLine"
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      >
+        @for (line of costLines; track line) {
+          <option [value]="line">{{ costLineLabels[line] }}</option>
+        }
+      </select>
+    </ui-form-field>
+
+    <ui-form-field label="Cost (৳)" for="a-amount" [error]="errorFor('amount')">
+      <input
+        id="a-amount"
+        type="number"
+        min="0"
+        step="100"
+        formControlName="amount"
+        class="tnum w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      />
+    </ui-form-field>
+
+    <ui-form-field label="Done on" for="a-performedOn" [error]="errorFor('performedOn')">
+      <input
+        id="a-performedOn"
+        type="date"
+        formControlName="performedOn"
+        class="tnum w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      />
+    </ui-form-field>
+
+    <ui-form-field label="What was done" for="a-note" [error]="errorFor('note')">
+      <textarea
+        id="a-note"
+        rows="2"
+        formControlName="note"
+        placeholder="Urea, first top-dressing."
+        class="w-full rounded-md border border-ink-200 px-2.5 py-2 text-sm focus:border-brand-500 focus:outline-none"
+      ></textarea>
+    </ui-form-field>
+
+    <!-- The consequence, shown live: this is Lane 3's Determine Cost
+         Responsibility step, made visible before the expense is committed. -->
+    <div class="mt-2 rounded-md bg-ink-50 px-3 py-2 text-xs text-ink-600">
+      <p class="font-medium text-ink-900">{{ bearerLabel() }}</p>
+      <p class="mt-0.5">{{ basis() }}</p>
+      @if (draft().amount > 0) {
+        <p class="tnum mt-1.5">
+          Owner {{ taka(split().ownerShare) }} · sharecropper
+          {{ taka(split().sharecropperShare) }}
+        </p>
+      }
+    </div>
+
+    @if (attempted() && hasErrors()) {
+      <ui-alert
+        tone="warn"
+        message="Some details still need fixing — see the fields marked above."
+        [dismissible]="false"
+      />
+    }
+  </form>
+
+  <ng-container modalActions>
+    <button
+      type="button"
+      (click)="closed.emit()"
+      class="rounded-md border border-ink-200 px-3 py-2 text-sm text-ink-700 hover:border-ink-300"
+    >
+      Cancel
+    </button>
+    <button
+      type="submit"
+      form="activity-form"
+      [disabled]="saving()"
+      class="rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-60"
+    >
+      {{ saving() ? 'Recording…' : 'Record activity' }}
+    </button>
+  </ng-container>
+</ui-modal>

@@ -1,0 +1,41 @@
+<ui-page-header
+  eyebrow="Harvest & Sales"
+  title="Harvests"
+  subtitle="Every batch off the field, with quantity, grade and labour — several per cycle is normal."
+>
+  <button
+    type="button"
+    (click)="formOpen.set(true)"
+    class="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700"
+  >
+    <ui-icon name="box" [size]="15" />
+    Record harvest
+  </button>
+</ui-page-header>
+
+@if (error(); as message) {
+  <ui-alert tone="bad" [message]="message" (dismissed)="clearError()" />
+}
+
+<div class="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+  <ui-kpi-tile label="Harvested" [value]="maund(totalHarvested())" hint="Across every batch" />
+  <ui-kpi-tile label="Cycles cut" [value]="cyclesHarvested()" hint="That have produced something" />
+  <ui-kpi-tile
+    label="Harvest labour"
+    [value]="taka(labourTotal())"
+    hint="Hired for cutting and carrying"
+  />
+</div>
+
+<ui-data-table
+  [columns]="columns"
+  [rows]="rows()"
+  [loading]="loading()"
+  searchPlaceholder="Search by reference, cycle or plot"
+  emptyTitle="Nothing harvested yet"
+  emptyHint="Record a batch against a cycle that has reached harvest."
+/>
+
+@if (formOpen()) {
+  <app-harvest-form (closed)="formOpen.set(false)" />
+}

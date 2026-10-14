@@ -1,0 +1,112 @@
+<ui-page-header
+  eyebrow="Agreements"
+  title="Advances & Loans"
+  subtitle="The dadhon ledger: drawn against an active agreement, deducted at settlement."
+>
+  @if (session.canRequestAdvance()) {
+    <button
+      type="button"
+      (click)="formOpen.set(true)"
+      class="inline-flex items-center justify-center gap-1.5 rounded-md bg-brand-600 px-3 py-2 text-sm font-medium text-white hover:bg-brand-700"
+    >
+      <ui-icon name="edit" [size]="15" />
+      Request advance
+    </button>
+  }
+</ui-page-header>
+
+@if (error(); as message) {
+  <ui-alert tone="bad" [message]="message" (dismissed)="clearError()" />
+}
+
+@if (undoable(); as withdrawn) {
+  <div
+    role="status"
+    class="mb-4 flex flex-col gap-2 rounded-md border border-ink-200 bg-ink-50 px-3 py-2 text-sm text-ink-700 sm:flex-row sm:items-center"
+  >
+    <span class="min-w-0 flex-1"> Request {{ withdrawn.reference }} withdrawn. </span>
+    <button
+      type="button"
+      (click)="undoWithdraw()"
+      class="shrink-0 rounded-md border border-ink-300 px-2.5 py-1 text-sm font-medium text-ink-900 hover:bg-white"
+    >
+      Undo
+    </button>
+  </div>
+}
+
+<div class="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+  <ui-kpi-tile
+    label="Awaiting approval"
+    [value]="pending().length"
+    [tone]="queueTone()"
+    hint="Requests a decision is owed on"
+  />
+  <ui-kpi-tile
+    label="Outstanding dadhon"
+    [value]="taka(outstanding())"
+    [tone]="outstanding() ? 'warn' : 'neutral'"
+    hint="Handed over, not yet recovered"
+  />
+  <ui-kpi-tile
+    label="Requested"
+    [value]="taka(requested())"
+    hint="What approving the queue would add"
+  />
+  <ui-kpi-tile label="Cleared" [value]="repaidCount()" tone="ok" hint="Advances repaid in full" />
+</div>
+
+@if (session.canApproveAdvance()) {
+  <div class="mb-6">
+    <ui-section-card
+      heading="Approval queue"
+      [note]="pending().length + ' waiting'"
+      [padded]="false"
+    >
+      @if (!pending().length) {
+        <ui-empty-state
+          icon="check-shield"
+          title="Nothing waiting"
+          hint="Every request has been decided."
+        />
+      } @else {
+        <ul class="divide-y divide-ink-100">
+          @for (row of pending(); track row.id) {
+            <li>
+              <a
+                [routerLink]="['/advances', row.id]"
+                class="flex flex-col gap-2 px-4 py-3 hover:bg-brand-100/40 sm:flex-row sm:items-center sm:gap-4"
+              >
+                <span class="min-w-0 flex-1">
+                  <span class="block text-sm font-medium text-brand-700">
+                    {{ row.reference }} · {{ agreementRef(row.agreementId) }}
+                  </span>
+                  <span class="block text-xs text-ink-500">
+                    {{ partyName(row.sharecropperId) }} · {{ landName(row.agreementId) }} ·
+                    requested {{ issuedOn(row) }} by {{ row.requestedBy }}
+                  </span>
+                </span>
+                <span class="tnum shrink-0 text-sm text-ink-700">{{ taka(row.amount) }}</span>
+                <ui-status-badge label="Awaiting approval" tone="warn" />
+              </a>
+            </li>
+          }
+        </ul>
+      }
+    </ui-section-card>
+  </div>
+}
+
+<ui-data-table
+  [columns]="columns"
+  [rows]="rows()"
+  [loading]="loading()"
+  [rowLink]="rowLink"
+  searchPlaceholder="Search by reference, agreement, land or sharecropper"
+  emptyTitle="No advances yet"
+  emptyHint="Request one against an active agreement to open a dadhon ledger row."
+/>
+
+@if (formOpen()) {
+  <app-advance-form (closed)="formOpen.set(false)" />
+}
